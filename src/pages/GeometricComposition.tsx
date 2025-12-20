@@ -130,8 +130,8 @@ export function GeometricComposition() {
           <button
             onClick={() => setViewMode('composition')}
             className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${viewMode === 'composition'
-                ? 'bg-geo text-void font-medium'
-                : 'bg-elevated text-text hover:bg-muted'
+              ? 'bg-geo text-void font-medium'
+              : 'bg-elevated text-text hover:bg-muted'
               }`}
           >
             Full View
@@ -139,8 +139,8 @@ export function GeometricComposition() {
           <button
             onClick={() => setViewMode('explorer')}
             className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${viewMode === 'explorer'
-                ? 'bg-geo text-void font-medium'
-                : 'bg-elevated text-text hover:bg-muted'
+              ? 'bg-geo text-void font-medium'
+              : 'bg-elevated text-text hover:bg-muted'
               }`}
           >
             3D Explorer
@@ -302,7 +302,7 @@ export function GeometricComposition() {
         {/* Previous Button */}
         <button
           onClick={goPrev}
-          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 flex"
           title="Previous Composition"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,7 +313,7 @@ export function GeometricComposition() {
         {/* Main Content Area */}
         <div className="flex-1 aspect-square relative group">
           {/* Overlay Actions */}
-          <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
             <button
               onClick={goRandom}
               className="p-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:rotate-180"
@@ -367,7 +367,7 @@ export function GeometricComposition() {
         {/* Next Button */}
         <button
           onClick={goNext}
-          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 flex"
           title="Next Composition"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
