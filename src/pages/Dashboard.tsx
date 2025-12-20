@@ -104,10 +104,6 @@ export function Dashboard() {
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-6">
             <span className="text-gradient">Untitled</span>
           </h1>
-          <p className="text-xl md:text-2xl text-subtle max-w-2xl mx-auto leading-relaxed">
-            A visual library containing every possible image, shape, and pattern.
-            Navigate through infinity.
-          </p>
 
           {/* Quick stats */}
           <div className="flex justify-center gap-8 mt-12">
@@ -229,10 +225,6 @@ export function Dashboard() {
               >
                 d.rocksystems.cloud
               </a>.
-            </p>
-            <p className="text-subtle leading-relaxed">
-              Navigate by address to find specific creations, or explore randomly to discover
-              what exists in the void. The same address produces the same image—always.
             </p>
 
             {/* Address vs Visual Space */}
