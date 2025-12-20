@@ -76,7 +76,7 @@ export function Dashboard() {
 
   useEffect(() => {
     persistence.getAll().then(setStates);
-    
+
     // Generate preview addresses for libraries without saved state
     const addresses: Record<string, string> = {};
     libraries.forEach(lib => {
@@ -99,7 +99,7 @@ export function Dashboard() {
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
           <div className="absolute top-40 right-40 w-48 h-48 bg-tertiary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
-        
+
         <div className="relative max-w-6xl mx-auto px-6 py-24 text-center">
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-6">
             <span className="text-gradient">Untitled</span>
@@ -108,7 +108,7 @@ export function Dashboard() {
             A visual library containing every possible image, shape, and pattern.
             Navigate through infinity.
           </p>
-          
+
           {/* Quick stats */}
           <div className="flex justify-center gap-8 mt-12">
             <div className="text-center">
@@ -149,13 +149,13 @@ export function Dashboard() {
             Shuffle Previews
           </button>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {libraries.map((lib) => {
             const state = states[lib.id];
             const hasProgress = state?.currentAddress;
             const address = getPreviewAddress(lib.id);
-            
+
             return (
               <Link
                 key={lib.id}
@@ -171,7 +171,7 @@ export function Dashboard() {
                     <lib.PreviewComponent address={address} />
                   </div>
                 </div>
-                
+
                 {/* Info */}
                 <div className="p-5">
                   <div className="flex items-center gap-3 mb-2">
@@ -182,7 +182,7 @@ export function Dashboard() {
                     <h3 className="text-lg font-semibold text-text">{lib.title}</h3>
                   </div>
                   <p className="text-sm text-subtle">{lib.description}</p>
-                  
+
                   {hasProgress && (
                     <div className="mt-4 pt-4 border-t border-elevated flex items-center justify-between">
                       <p className="text-xs text-subtle">
@@ -199,7 +199,7 @@ export function Dashboard() {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Hover accent */}
                 <div
                   className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"
@@ -217,15 +217,22 @@ export function Dashboard() {
           <h2 className="text-2xl font-bold mb-6 text-text">About</h2>
           <div className="space-y-4">
             <p className="text-subtle leading-relaxed">
-              Inspired by Jorge Luis Borges' "The Library of Babel," this project explores
-              the concept of infinite possibility spaces through visual media. Each address
-              (a 64-character hex string) maps to a unique visual in each library.
+              This is a highly sophisticated, cloud-native, AWS-powered digital playground
+              designed specifically for DRock's Birthday. It serves as a "visual workspace"
+              to experiment with UI, interactivity, and design, but mostly, it serves as a
+              digital monument to how cool my big sister is <a
+                href="https://d.rocksystems.cloud"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                d.rocksystems.cloud
+              </a>.
             </p>
             <p className="text-subtle leading-relaxed">
               Navigate by address to find specific creations, or explore randomly to discover
               what exists in the void. The same address produces the same image—always.
             </p>
-            
+
             {/* Address vs Visual Space */}
             <div className="mt-8 p-5 bg-surface rounded-xl border border-elevated">
               <h3 className="font-semibold text-text mb-3">Address Space vs Visual Space</h3>
@@ -240,12 +247,12 @@ export function Dashboard() {
                 </div>
               </div>
               <p className="text-xs text-subtle mt-3">
-                Some libraries have more possible visuals than addresses—not every image is reachable. 
-                Others have fewer, meaning every possibility has a unique address. Settings like grid size 
+                Some libraries have more possible visuals than addresses—not every image is reachable.
+                Others have fewer, meaning every possibility has a unique address. Settings like grid size
                 and symmetry create parallel "dimensions" where the same address produces different results.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
               <div className="p-4 bg-surface rounded-xl border border-elevated">
                 <h3 className="font-semibold text-text mb-2">Deterministic</h3>
