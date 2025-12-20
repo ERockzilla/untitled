@@ -1,13 +1,16 @@
 import { useState, useMemo } from 'react';
 import { LibraryLayout } from '../components/library/LibraryLayout';
 import { useLibraryState } from '../components/library/useLibraryState';
-import { 
-  AnimatedLEDMatrix, 
+import {
+  AnimatedLEDMatrix,
   LED_COLORS,
   addressToLEDMatrix,
 } from '../components/led/LEDMatrixRenderer';
 import type { LEDShape, AnimationMode } from '../components/led/LEDMatrixRenderer';
 import { getLEDSpaceInfo } from '../lib/combinatorics';
+
+// Check if we're on the DRock VIP subdomain - defaults to text mode with birthday message!
+const isDRockDomain = window.location.hostname.startsWith('d.');
 
 const GRID_PRESETS = [
   { label: '8×8', width: 8, height: 8 },
@@ -55,12 +58,12 @@ export function LEDMatrix() {
     (settings.ledShape as LEDShape) || 'circle'
   );
   const [animation, setAnimation] = useState<AnimationMode>(
-    (settings.animation as AnimationMode) || 'static'
+    (settings.animation as AnimationMode) || 'scroll-left'
   );
   const [speed, setSpeed] = useState((settings.speed as number) || 100);
   const [showGlow, setShowGlow] = useState((settings.showGlow as boolean) ?? true);
-  const [textMode, setTextMode] = useState((settings.textMode as boolean) || false);
-  const [customText, setCustomText] = useState((settings.customText as string) || 'HELLO');
+  const [textMode, setTextMode] = useState((settings.textMode as boolean) ?? isDRockDomain);
+  const [customText, setCustomText] = useState((settings.customText as string) || 'HAPPY BIRTHDAY!');
   const [textColor, setTextColor] = useState((settings.textColor as string) || '#00ff00');
 
   const spaceInfo = useMemo(
@@ -73,7 +76,7 @@ export function LEDMatrix() {
     const matrix = addressToLEDMatrix(address, gridSize.width, gridSize.height);
     let litCount = 0;
     const colorCounts: Record<string, number> = {};
-    
+
     matrix.leds.forEach(row => {
       row.forEach(led => {
         if (led.on) {
@@ -82,7 +85,7 @@ export function LEDMatrix() {
         }
       });
     });
-    
+
     return {
       totalLEDs: gridSize.width * gridSize.height,
       litCount,
@@ -111,11 +114,10 @@ export function LEDMatrix() {
               setTextMode(false);
               updateSettings({ textMode: false });
             }}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
-              !textMode
-                ? 'bg-led text-void font-medium'
-                : 'bg-elevated text-text hover:bg-muted'
-            }`}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${!textMode
+              ? 'bg-led text-void font-medium'
+              : 'bg-elevated text-text hover:bg-muted'
+              }`}
           >
             Pattern
           </button>
@@ -124,11 +126,10 @@ export function LEDMatrix() {
               setTextMode(true);
               updateSettings({ textMode: true });
             }}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
-              textMode
-                ? 'bg-led text-void font-medium'
-                : 'bg-elevated text-text hover:bg-muted'
-            }`}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${textMode
+              ? 'bg-led text-void font-medium'
+              : 'bg-elevated text-text hover:bg-muted'
+              }`}
           >
             Text
           </button>
@@ -162,9 +163,8 @@ export function LEDMatrix() {
                     setTextColor(color);
                     updateSettings({ textColor: color });
                   }}
-                  className={`w-6 h-6 rounded border-2 transition-all ${
-                    textColor === color ? 'border-white scale-110' : 'border-transparent'
-                  }`}
+                  className={`w-6 h-6 rounded border-2 transition-all ${textColor === color ? 'border-white scale-110' : 'border-transparent'
+                    }`}
                   style={{ backgroundColor: color }}
                 />
               ))}
@@ -186,11 +186,10 @@ export function LEDMatrix() {
                 setGridSize({ width: preset.width, height: preset.height });
                 updateSettings({ width: preset.width, height: preset.height });
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
-                gridSize.width === preset.width && gridSize.height === preset.height
-                  ? 'bg-led text-void font-medium'
-                  : 'bg-elevated text-text hover:bg-muted'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs transition-all ${gridSize.width === preset.width && gridSize.height === preset.height
+                ? 'bg-led text-void font-medium'
+                : 'bg-elevated text-text hover:bg-muted'
+                }`}
             >
               {preset.label}
             </button>
@@ -211,11 +210,10 @@ export function LEDMatrix() {
                 setLedShape(option.value);
                 updateSettings({ ledShape: option.value });
               }}
-              className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
-                ledShape === option.value
-                  ? 'bg-led text-void font-medium'
-                  : 'bg-elevated text-text hover:bg-muted'
-              }`}
+              className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${ledShape === option.value
+                ? 'bg-led text-void font-medium'
+                : 'bg-elevated text-text hover:bg-muted'
+                }`}
             >
               {option.label}
             </button>
@@ -236,17 +234,16 @@ export function LEDMatrix() {
                 setAnimation(option.value);
                 updateSettings({ animation: option.value });
               }}
-              className={`px-2 py-1.5 rounded-lg text-xs transition-all ${
-                animation === option.value
-                  ? 'bg-led text-void font-medium'
-                  : 'bg-elevated text-text hover:bg-muted'
-              }`}
+              className={`px-2 py-1.5 rounded-lg text-xs transition-all ${animation === option.value
+                ? 'bg-led text-void font-medium'
+                : 'bg-elevated text-text hover:bg-muted'
+                }`}
             >
               {option.label}
             </button>
           ))}
         </div>
-        
+
         {animation !== 'static' && (
           <div className="mt-3">
             <label className="block text-xs text-subtle mb-1">
@@ -325,7 +322,7 @@ export function LEDMatrix() {
             <dd className="text-text font-mono">6 modes</dd>
           </div>
         </dl>
-        
+
         <div className="mt-3 pt-3 border-t border-muted">
           <h4 className="text-xs font-medium text-text mb-1">Combinatorics</h4>
           <dl className="space-y-1 text-xs">
