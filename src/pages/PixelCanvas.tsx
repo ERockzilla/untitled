@@ -15,7 +15,7 @@ function generateShades(hexColor: string, count: number = 4): string[] {
   const r = parseInt(hex.substring(0, 2), 16);
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
-  
+
   const shades: string[] = [];
   for (let i = 0; i < count; i++) {
     const factor = 0.3 + (i / (count - 1)) * 0.7; // 30% to 100% brightness
@@ -42,12 +42,11 @@ export function PixelCanvas() {
   } = useLibraryState({ pageId: 'pixel', addressLength: 64 });
 
   const [zoom, setZoom] = useState((settings.zoom as number) || 1);
-  const [selectedColor, setSelectedColor] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>('canvas');
-  
-  // Selected colors for explorer - start with just two colors for coherent look
-  const [explorerColors, setExplorerColors] = useState<Set<number>>(() => 
-    new Set((settings.explorerColors as number[]) || [0, 1])
+
+  // Selected colors for filtering - default to ALL colors selected
+  const [explorerColors, setExplorerColors] = useState<Set<number>>(() =>
+    new Set((settings.explorerColors as number[]) || PIXEL_PALETTE_16.map((_, i) => i))
   );
   const [useShades, setUseShades] = useState((settings.useShades as boolean) ?? true);
 
@@ -55,13 +54,22 @@ export function PixelCanvas() {
   const colors = 16;
   const spaceInfo = useMemo(() => getPixelSpaceInfo(size, colors), []);
 
-  // Build filtered palette for explorer
+  // Build filtered palette for CANVAS (no shades, just active colors)
+  const canvasPalette = useMemo(() => {
+    const selectedIndices = Array.from(explorerColors);
+    if (selectedIndices.length === 0) {
+      return PIXEL_PALETTE_16;
+    }
+    return selectedIndices.map(idx => PIXEL_PALETTE_16[idx]);
+  }, [explorerColors]);
+
+  // Build filtered palette for EXPLORER (with optional shades)
   const explorerPalette = useMemo(() => {
     const selectedIndices = Array.from(explorerColors);
     if (selectedIndices.length === 0) {
       return PIXEL_PALETTE_16;
     }
-    
+
     if (useShades) {
       const allShades: string[] = [];
       selectedIndices.forEach(idx => {
@@ -153,21 +161,19 @@ export function PixelCanvas() {
         <div className="flex gap-2">
           <button
             onClick={() => setViewMode('canvas')}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
-              viewMode === 'canvas'
-                ? 'bg-pixel text-void font-medium'
-                : 'bg-elevated text-text hover:bg-muted'
-            }`}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${viewMode === 'canvas'
+              ? 'bg-pixel text-void font-medium'
+              : 'bg-elevated text-text hover:bg-muted'
+              }`}
           >
             Canvas
           </button>
           <button
             onClick={() => setViewMode('explorer')}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
-              viewMode === 'explorer'
-                ? 'bg-pixel text-void font-medium'
-                : 'bg-elevated text-text hover:bg-muted'
-            }`}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${viewMode === 'explorer'
+              ? 'bg-pixel text-void font-medium'
+              : 'bg-elevated text-text hover:bg-muted'
+              }`}
           >
             3D Explorer
           </button>
@@ -193,24 +199,54 @@ export function PixelCanvas() {
             />
           </div>
 
-          {/* Color Palette */}
+          {/* Active Colors Filter */}
           <div>
-            <label className="block text-sm font-medium text-text mb-2">
-              Color Palette (click to paint)
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-text">
+                Active Colors ({explorerColors.size})
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={selectAllColors}
+                  className="text-xs text-pixel hover:underline"
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => {
+                    const first = new Set([0]);
+                    setExplorerColors(first);
+                    updateSettings({ explorerColors: [0] });
+                  }}
+                  className="text-xs text-subtle hover:text-text hover:underline"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
             <div className="grid grid-cols-8 gap-1">
               {PIXEL_PALETTE_16.map((color, i) => (
                 <button
                   key={i}
-                  onClick={() => setSelectedColor(i)}
-                  className={`w-8 h-8 rounded border-2 transition-all ${
-                    selectedColor === i ? 'border-white scale-110' : 'border-transparent'
-                  }`}
+                  onClick={() => toggleExplorerColor(i)}
+                  className={`w-8 h-8 rounded border-2 transition-all relative ${explorerColors.has(i)
+                    ? 'border-white scale-110 ring-2 ring-pixel ring-offset-1 ring-offset-void'
+                    : 'border-transparent opacity-30 hover:opacity-70'
+                    }`}
                   style={{ backgroundColor: color }}
-                  title={`Color ${i}`}
-                />
+                  title={`Color ${i} - Click to ${explorerColors.has(i) ? 'deactivate' : 'activate'}`}
+                >
+                  {!explorerColors.has(i) && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-full h-[2px] bg-red-500/70 rotate-45" />
+                    </div>
+                  )}
+                </button>
               ))}
             </div>
+            <p className="text-xs text-subtle mt-2">
+              Click colors to toggle. Canvas shows only active colors.
+            </p>
           </div>
         </>
       )}
@@ -236,11 +272,10 @@ export function PixelCanvas() {
                 <button
                   key={i}
                   onClick={() => toggleExplorerColor(i)}
-                  className={`w-8 h-8 rounded border-2 transition-all ${
-                    explorerColors.has(i) 
-                      ? 'border-white scale-110 ring-2 ring-pixel ring-offset-1 ring-offset-void' 
-                      : 'border-transparent opacity-40 hover:opacity-70'
-                  }`}
+                  className={`w-8 h-8 rounded border-2 transition-all ${explorerColors.has(i)
+                    ? 'border-white scale-110 ring-2 ring-pixel ring-offset-1 ring-offset-void'
+                    : 'border-transparent opacity-40 hover:opacity-70'
+                    }`}
                   style={{ backgroundColor: color }}
                   title={`Color ${i}${explorerColors.has(i) ? ' (selected)' : ''}`}
                 />
@@ -310,7 +345,7 @@ export function PixelCanvas() {
             </div>
           )}
         </dl>
-        
+
         <div className="mt-3 pt-3 border-t border-muted">
           <h4 className="text-xs font-medium text-text mb-1">Combinatorics</h4>
           <dl className="space-y-1 text-xs">
@@ -358,38 +393,92 @@ export function PixelCanvas() {
       accentColor="var(--color-pixel)"
       controls={controls}
     >
-      {viewMode === 'canvas' ? (
-        <div className="w-full h-full bg-surface rounded-2xl border border-elevated flex items-center justify-center p-4 overflow-hidden">
-          <div 
-            className="relative"
-            style={{
-              width: `${Math.min(100, zoom * 50)}%`,
-              aspectRatio: '1',
-            }}
-          >
-            <PixelCanvasRenderer
-              address={address}
-              size={size}
-              colors={colors}
-              zoom={zoom}
-              palette={PIXEL_PALETTE_16}
-              onPixelClick={handlePixelClick}
-              className="w-full h-full rounded-lg"
-            />
+      <div className="flex items-center gap-4 h-full">
+        {/* Previous Button */}
+        <button
+          onClick={goPrev}
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          title="Previous Image"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* Main Content Area */}
+        <div className="flex-1 aspect-square relative group">
+          {/* Overlay Actions */}
+          <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              onClick={goRandom}
+              className="p-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:rotate-180"
+              title="Random"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+            <button
+              onClick={toggleFavorite}
+              className="p-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <svg
+                className="w-5 h-5"
+                fill={isFavorite ? "currentColor" : "none"}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
           </div>
+
+          {viewMode === 'canvas' ? (
+            <div className="w-full h-full bg-surface rounded-2xl border border-elevated flex items-center justify-center p-4 overflow-hidden relative">
+              <div
+                className="relative transition-all duration-300"
+                style={{
+                  width: `${Math.min(100, zoom * 50)}%`,
+                  aspectRatio: '1',
+                }}
+              >
+                <PixelCanvasRenderer
+                  address={address}
+                  size={size}
+                  colors={canvasPalette.length}
+                  zoom={zoom}
+                  palette={canvasPalette}
+                  onPixelClick={handlePixelClick}
+                  className="w-full h-full rounded-lg shadow-2xl"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-full bg-surface rounded-2xl border border-elevated overflow-hidden relative">
+              <NeighborhoodExplorer
+                currentAddress={address}
+                onSelectAddress={setAddress}
+                renderPreview={renderPreview}
+                gridSize={5}
+                previewSize={64}
+                accentColor="var(--color-pixel)"
+              />
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="w-full h-full bg-surface rounded-2xl border border-elevated overflow-hidden">
-          <NeighborhoodExplorer
-            currentAddress={address}
-            onSelectAddress={setAddress}
-            renderPreview={renderPreview}
-            gridSize={5}
-            previewSize={64}
-            accentColor="var(--color-pixel)"
-          />
-        </div>
-      )}
+
+        {/* Next Button */}
+        <button
+          onClick={goNext}
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          title="Next Image"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
     </LibraryLayout>
   );
 }

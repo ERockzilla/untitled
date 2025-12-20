@@ -29,13 +29,13 @@ export function VoxelSpace() {
   const size = 6;
   const colorCount = VOXEL_COLORS.length - 1; // exclude empty
   const spaceInfo = useMemo(() => getVoxelSpaceInfo(size, colorCount), []);
-  
+
   // Calculate voxel statistics
   const stats = useMemo(() => {
     const grid = addressToVoxels(address, size);
     const colorCounts: Record<number, number> = {};
     let totalFilled = 0;
-    
+
     for (let x = 0; x < size; x++) {
       for (let y = 0; y < size; y++) {
         for (let z = 0; z < size; z++) {
@@ -47,7 +47,7 @@ export function VoxelSpace() {
         }
       }
     }
-    
+
     return { colorCounts, totalFilled, totalVoxels: size * size * size };
   }, [address, size]);
 
@@ -90,7 +90,7 @@ export function VoxelSpace() {
             />
           </div>
         </div>
-        
+
         <div className="mt-4 space-y-1">
           {VOXEL_COLORS.slice(1).map((item, i) => {
             const count = stats.colorCounts[i + 1] || 0;
@@ -114,14 +114,14 @@ export function VoxelSpace() {
         <dl className="space-y-1 text-xs">
           <div className="flex justify-between">
             <dt className="text-subtle">Grid Size:</dt>
-            <dd className="text-text font-mono">{size}×{size}×{size} = {size*size*size} voxels</dd>
+            <dd className="text-text font-mono">{size}×{size}×{size} = {size * size * size} voxels</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-subtle">States per Voxel:</dt>
             <dd className="text-text font-mono">{VOXEL_COLORS.length} (empty + {colorCount} colors)</dd>
           </div>
         </dl>
-        
+
         <div className="mt-3 pt-3 border-t border-muted">
           <h4 className="text-xs font-medium text-text mb-1">Combinatorics</h4>
           <dl className="space-y-1 text-xs">
@@ -167,12 +167,66 @@ export function VoxelSpace() {
       accentColor="var(--color-voxel)"
       controls={controls}
     >
-      <div className="w-full h-full bg-surface rounded-2xl border border-elevated overflow-hidden">
-        <VoxelRenderer
-          address={address}
-          size={size}
-          className="w-full h-full"
-        />
+      <div className="flex items-center gap-4 h-full">
+        {/* Previous Button */}
+        <button
+          onClick={goPrev}
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          title="Previous Sculpture"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* Main Content Area */}
+        <div className="flex-1 aspect-square relative group">
+          {/* Overlay Actions */}
+          <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              onClick={goRandom}
+              className="p-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:rotate-180"
+              title="Random"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+            <button
+              onClick={toggleFavorite}
+              className="p-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <svg
+                className="w-5 h-5"
+                fill={isFavorite ? "currentColor" : "none"}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="w-full h-full bg-surface rounded-2xl border border-elevated overflow-hidden">
+            <VoxelRenderer
+              address={address}
+              size={size}
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+
+        {/* Next Button */}
+        <button
+          onClick={goNext}
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          title="Next Sculpture"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </LibraryLayout>
   );

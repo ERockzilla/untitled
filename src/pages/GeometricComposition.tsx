@@ -35,24 +35,24 @@ function renderSimplifiedPreview(previewAddress: string, canvas: HTMLCanvasEleme
 
   // Draw 2-4 simple, bounded shapes
   const shapeCount = 2 + Math.floor(prng() * 3);
-  
+
   for (let i = 0; i < shapeCount; i++) {
     ctx.save();
-    
+
     // Keep shapes within bounds with margin
     const shapeSize = innerSize * (0.2 + prng() * 0.3);
     const maxOffset = (innerSize - shapeSize) / 2;
     const cx = padding + innerSize / 2 + (prng() - 0.5) * maxOffset * 2;
     const cy = padding + innerSize / 2 + (prng() - 0.5) * maxOffset * 2;
-    
+
     ctx.fillStyle = colors[Math.floor(prng() * colors.length)];
     ctx.globalAlpha = 0.6 + prng() * 0.4;
-    
+
     const shapeType = Math.floor(prng() * 4);
-    
+
     ctx.translate(cx, cy);
     ctx.rotate(prng() * Math.PI * 2);
-    
+
     switch (shapeType) {
       case 0: // Circle
         ctx.beginPath();
@@ -80,7 +80,7 @@ function renderSimplifiedPreview(previewAddress: string, canvas: HTMLCanvasEleme
         ctx.fill();
         break;
     }
-    
+
     ctx.restore();
   }
 }
@@ -129,21 +129,19 @@ export function GeometricComposition() {
         <div className="flex gap-2">
           <button
             onClick={() => setViewMode('composition')}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
-              viewMode === 'composition'
+            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${viewMode === 'composition'
                 ? 'bg-geo text-void font-medium'
                 : 'bg-elevated text-text hover:bg-muted'
-            }`}
+              }`}
           >
             Full View
           </button>
           <button
             onClick={() => setViewMode('explorer')}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
-              viewMode === 'explorer'
+            className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${viewMode === 'explorer'
                 ? 'bg-geo text-void font-medium'
                 : 'bg-elevated text-text hover:bg-muted'
-            }`}
+              }`}
           >
             3D Explorer
           </button>
@@ -253,7 +251,7 @@ export function GeometricComposition() {
             <dd className="text-text font-mono">3-7</dd>
           </div>
         </dl>
-        
+
         <div className="mt-3 pt-3 border-t border-muted">
           <h4 className="text-xs font-medium text-text mb-1">Combinatorics</h4>
           <dl className="space-y-1 text-xs">
@@ -300,29 +298,83 @@ export function GeometricComposition() {
       accentColor="var(--color-geo)"
       controls={controls}
     >
-      {viewMode === 'composition' ? (
-        <div className="w-full h-full bg-surface rounded-2xl border border-elevated flex items-center justify-center p-4 overflow-hidden">
-          <div className="w-full max-w-lg aspect-square">
-            <GeometricRenderer
-              address={address}
-              palette={GEO_PALETTE_64}
-              className="w-full h-full rounded-xl shadow-2xl"
-              animate={animate}
-            />
+      <div className="flex items-center gap-4 h-full">
+        {/* Previous Button */}
+        <button
+          onClick={goPrev}
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          title="Previous Composition"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* Main Content Area */}
+        <div className="flex-1 aspect-square relative group">
+          {/* Overlay Actions */}
+          <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              onClick={goRandom}
+              className="p-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:rotate-180"
+              title="Random"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+            <button
+              onClick={toggleFavorite}
+              className="p-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <svg
+                className="w-5 h-5"
+                fill={isFavorite ? "currentColor" : "none"}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
           </div>
+
+          {viewMode === 'composition' ? (
+            <div className="w-full h-full bg-surface rounded-2xl border border-elevated flex items-center justify-center p-4 overflow-hidden relative">
+              <div className="w-full max-w-lg aspect-square">
+                <GeometricRenderer
+                  address={address}
+                  palette={GEO_PALETTE_64}
+                  className="w-full h-full rounded-xl shadow-2xl"
+                  animate={animate}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-full bg-surface rounded-2xl border border-elevated overflow-hidden relative">
+              <NeighborhoodExplorer
+                currentAddress={address}
+                onSelectAddress={setAddress}
+                renderPreview={renderPreview}
+                gridSize={5}
+                previewSize={80}
+                accentColor="var(--color-geo)"
+              />
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="w-full h-full bg-surface rounded-2xl border border-elevated overflow-hidden">
-          <NeighborhoodExplorer
-            currentAddress={address}
-            onSelectAddress={setAddress}
-            renderPreview={renderPreview}
-            gridSize={5}
-            previewSize={80}
-            accentColor="var(--color-geo)"
-          />
-        </div>
-      )}
+
+        {/* Next Button */}
+        <button
+          onClick={goNext}
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          title="Next Composition"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
     </LibraryLayout>
   );
 }

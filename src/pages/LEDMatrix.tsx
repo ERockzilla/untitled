@@ -357,21 +357,75 @@ export function LEDMatrix() {
       accentColor="var(--color-led)"
       controls={controls}
     >
-      <div className="w-full h-full bg-surface rounded-2xl border border-elevated flex items-center justify-center p-6 overflow-hidden">
-        <div className="w-full max-w-2xl">
-          <AnimatedLEDMatrix
-            address={address}
-            width={gridSize.width}
-            height={gridSize.height}
-            text={textMode ? customText : undefined}
-            textColor={textColor}
-            animation={animation}
-            speed={speed}
-            ledShape={ledShape}
-            showGlow={showGlow}
-            className="w-full rounded-xl shadow-2xl"
-          />
+      <div className="flex items-center gap-4 h-full">
+        {/* Previous Button */}
+        <button
+          onClick={goPrev}
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          title="Previous Pattern"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* Main Content Area */}
+        <div className="flex-1 aspect-square md:aspect-auto h-full relative group flex items-center justify-center">
+          {/* Overlay Actions */}
+          <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              onClick={goRandom}
+              className="p-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:rotate-180"
+              title="Random"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+            <button
+              onClick={toggleFavorite}
+              className="p-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <svg
+                className="w-5 h-5"
+                fill={isFavorite ? "currentColor" : "none"}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="w-full h-full bg-surface rounded-2xl border border-elevated flex items-center justify-center p-6 overflow-hidden">
+            <div className="w-full max-w-2xl">
+              <AnimatedLEDMatrix
+                address={address}
+                width={gridSize.width}
+                height={gridSize.height}
+                text={textMode ? customText : undefined}
+                textColor={textColor}
+                animation={animation}
+                speed={speed}
+                ledShape={ledShape}
+                showGlow={showGlow}
+                className="w-full rounded-xl shadow-2xl"
+              />
+            </div>
+          </div>
         </div>
+
+        {/* Next Button */}
+        <button
+          onClick={goNext}
+          className="p-3 rounded-xl bg-elevated/50 hover:bg-elevated text-subtle hover:text-text transition-all hover:scale-110 active:scale-95 hidden md:flex"
+          title="Next Pattern"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </LibraryLayout>
   );
