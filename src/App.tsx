@@ -6,6 +6,7 @@ import { VoxelSpace } from './pages/VoxelSpace';
 import { ParametricCurves } from './pages/ParametricCurves';
 import { TilePatterns } from './pages/TilePatterns';
 import { LEDMatrix } from './pages/LEDMatrix';
+import { MathNatureBackground } from './components/background/MathNatureBackground';
 
 // Check if we're on the DRock VIP subdomain
 const isDRockDomain = window.location.hostname.startsWith('d.');
@@ -29,16 +30,21 @@ function HomeRoute() {
 
 function App() {
   return (
-    <Routes>
-      {/* Smart redirect: only on first visit to d.rocksystems.cloud */}
-      <Route path="/" element={<HomeRoute />} />
-      <Route path="/pixel" element={<PixelCanvas />} />
-      <Route path="/geometric" element={<GeometricComposition />} />
-      <Route path="/voxel" element={<VoxelSpace />} />
-      <Route path="/curves" element={<ParametricCurves />} />
-      <Route path="/tiles" element={<TilePatterns />} />
-      <Route path="/led" element={<LEDMatrix />} />
-    </Routes>
+    <>
+      {/* Mathematical matrix-style animated background */}
+      <MathNatureBackground opacity={0.18} speed={1} />
+
+      <Routes>
+        {/* Smart redirect: only on first visit to d.rocksystems.cloud */}
+        <Route path="/" element={<HomeRoute />} />
+        <Route path="/pixel" element={<PixelCanvas />} />
+        <Route path="/geometric" element={<GeometricComposition />} />
+        <Route path="/voxel" element={<VoxelSpace />} />
+        <Route path="/curves" element={<ParametricCurves />} />
+        <Route path="/tiles" element={<TilePatterns />} />
+        <Route path="/led" element={<LEDMatrix />} />
+      </Routes>
+    </>
   );
 }
 
