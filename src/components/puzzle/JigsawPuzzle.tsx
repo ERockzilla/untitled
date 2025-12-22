@@ -8,6 +8,7 @@ import {
     shuffleJigsawPieces,
     isJigsawComplete,
 } from '../../lib/puzzleUtils';
+import { useTheme } from '../../lib/ThemeContext';
 
 interface JigsawPuzzleProps {
     imageUrl: string;
@@ -91,6 +92,7 @@ function generatePuzzlePieceShape(
 }
 
 export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps) {
+    const { theme } = useTheme();
     const [pieces, setPieces] = useState<PuzzlePiece[]>([]);
     const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
     const [draggedPiece, setDraggedPiece] = useState<number | null>(null);
@@ -444,7 +446,7 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
     return (
         <div
             ref={containerRef}
-            className="flex flex-col gap-3 h-full select-none touch-none no-overscroll"
+            className="flex flex-col gap-3 h-full select-none"
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={() => setDraggedPiece(null)}
@@ -455,7 +457,7 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
             {/* Instructions & Rotation Controls */}
             <div className="flex items-center justify-center gap-2 flex-wrap">
                 <span className="text-xs text-subtle">
-                    Drag to place • <span className="text-red-400">Red</span> = wrong rotation • <span className="text-yellow-400">Yellow</span> = wrong spot
+                    Drag to place • <span className="text-red-400">Red</span> = no good • <span className="text-yellow-400">Yellow</span> = orientation good
                 </span>
             </div>
 
@@ -502,8 +504,10 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                         top: tabOverflow,
                         width: boardWidth,
                         height: boardHeight,
-                        backgroundColor: 'rgba(255,255,255,0.03)',
-                        boxShadow: 'inset 0 0 30px rgba(0,0,0,0.4)',
+                        backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.03)',
+                        boxShadow: theme === 'light'
+                            ? 'inset 0 0 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.1)'
+                            : 'inset 0 0 30px rgba(0,0,0,0.4)',
                     }}
                 >
                     <svg className="absolute inset-0" width={boardWidth} height={boardHeight}>
@@ -566,7 +570,7 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
             {/* Piece Tray */}
             <div
                 className="flex-1 min-h-[120px] p-3 rounded-lg overflow-auto"
-                style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}
+                style={{ backgroundColor: theme === 'light' ? 'rgba(245, 243, 238, 0.95)' : 'rgba(0,0,0,0.2)' }}
             >
                 <div className="flex flex-wrap gap-2 justify-center">
                     {unplacedPieces.map(piece => {

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { persistence } from '../lib/persistence';
 import type { LibraryState } from '../lib/persistence';
 import { randomAddress } from '../lib/babel-core';
+import { useTheme } from '../lib/ThemeContext';
 import { PixelCanvasPreview } from '../components/pixel/PixelCanvasRenderer';
 import { GeometricPreview } from '../components/geometric/GeometricRenderer';
 import { VoxelPreview } from '../components/voxel/VoxelRenderer';
@@ -71,6 +72,7 @@ const libraries: LibraryCard[] = [
 ];
 
 export function Dashboard() {
+  const { theme, toggleTheme } = useTheme();
   const [states, setStates] = useState<Record<string, LibraryState>>({});
   const [previewAddresses, setPreviewAddresses] = useState<Record<string, string>>({});
 
@@ -99,6 +101,23 @@ export function Dashboard() {
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
           <div className="absolute top-40 right-40 w-48 h-48 bg-tertiary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
+
+        {/* Theme toggle button - top right */}
+        <button
+          onClick={toggleTheme}
+          className="absolute top-6 right-6 z-10 w-11 h-11 rounded-xl bg-surface/80 backdrop-blur border border-elevated hover:border-muted transition-all flex items-center justify-center text-subtle hover:text-text theme-toggle"
+          title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+        >
+          {theme === 'light' ? (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          )}
+        </button>
 
         <div className="relative max-w-6xl mx-auto px-6 py-24 text-center">
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-6">

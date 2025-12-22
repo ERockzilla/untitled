@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { JigsawPuzzle } from '../components/puzzle/JigsawPuzzle';
 import { SlidingPuzzle } from '../components/puzzle/SlidingPuzzle';
+import { useTheme } from '../lib/ThemeContext';
 import type {
     PuzzleProgress,
     Difficulty,
@@ -16,18 +17,19 @@ import {
 // Available puzzle images
 const PUZZLE_IMAGES = [
     { id: 'puzzle1', src: '/puzzles/puzzle1.jpg', name: 'Puzzle 1' },
-    // Add more as they become available:
-    // { id: 'puzzle2', src: '/puzzles/puzzle2.jpg', name: 'Puzzle 2' },
-    // { id: 'puzzle3', src: '/puzzles/puzzle3.jpg', name: 'Puzzle 3' },
-    // { id: 'puzzle4', src: '/puzzles/puzzle4.jpg', name: 'Puzzle 4' },
-    // { id: 'puzzle5', src: '/puzzles/puzzle5.jpg', name: 'Puzzle 5' },
+    { id: 'puzzle2', src: '/puzzles/puzzle2.jpg', name: 'Puzzle 2' },
+    { id: 'puzzle3', src: '/puzzles/puzzle3.jpg', name: 'Puzzle 3' },
+    { id: 'puzzle4', src: '/puzzles/puzzle4.jpg', name: 'Puzzle 4' },
+    { id: 'puzzle5', src: '/puzzles/puzzle5.jpg', name: 'Puzzle 5' },
+    { id: 'puzzle6', src: '/puzzles/puzzle6.jpg', name: 'Puzzle 6' },
 ];
 
 type PuzzleMode = 'jigsaw' | 'sliding';
 
 export function PuzzleGame() {
+    const { theme, toggleTheme } = useTheme();
     const [selectedImage, setSelectedImage] = useState(PUZZLE_IMAGES[0]);
-    const [mode, setMode] = useState<PuzzleMode>('jigsaw');
+    const [mode, setMode] = useState<PuzzleMode>('sliding');
     const [difficulty, setDifficulty] = useState<Difficulty>('medium');
     const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
     const [progress, setProgress] = useState<PuzzleProgress>({});
@@ -139,6 +141,23 @@ export function PuzzleGame() {
                         );
                     })}
                 </div>
+
+                {/* Theme toggle button */}
+                <button
+                    onClick={toggleTheme}
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-elevated hover:bg-muted transition-colors flex items-center justify-center text-subtle hover:text-text theme-toggle"
+                    title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                >
+                    {theme === 'light' ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    )}
+                </button>
             </header>
 
             {/* Main content */}

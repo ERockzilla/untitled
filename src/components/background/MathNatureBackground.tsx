@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface MatrixBackgroundProps {
     className?: string;
@@ -41,6 +41,26 @@ export function MathNatureBackground({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const streamsRef = useRef<Stream[]>([]);
     const animationRef = useRef<number>(0);
+    const [isLightTheme, setIsLightTheme] = useState(false);
+
+    // Detect theme changes
+    useEffect(() => {
+        const checkTheme = () => {
+            const theme = document.documentElement.getAttribute('data-theme');
+            setIsLightTheme(theme === 'light');
+        };
+
+        checkTheme();
+
+        // Watch for theme changes
+        const observer = new MutationObserver(checkTheme);
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-theme']
+        });
+
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -210,17 +230,24 @@ export function MathNatureBackground({
                             hue = 150; // Teal for vertical
                     }
 
-                    // Head of stream is brighter/whiter
-                    const saturation = i === 0 ? 50 : 80;
-                    const lightness = i === 0 ? 80 : 55;
+                    // Adjust colors for light/dark theme
+                    // Light mode: darker, warmer colors for visibility
+                    // Dark mode: brighter, more saturated colors
+                    const saturation = isLightTheme
+                        ? (i === 0 ? 70 : 60)
+                        : (i === 0 ? 50 : 80);
+                    const lightness = isLightTheme
+                        ? (i === 0 ? 35 : 45)
+                        : (i === 0 ? 80 : 55);
 
                     ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
                     ctx.fillText(symbol, pos.x, pos.y);
 
-                    // Add subtle glow for head
+                    // Add subtle glow for head (less glow in light mode)
                     if (i === 0 && alpha > 0.1) {
-                        ctx.shadowColor = `hsla(${hue}, 100%, 60%, ${alpha * 0.5})`;
-                        ctx.shadowBlur = 8;
+                        const glowLightness = isLightTheme ? 40 : 60;
+                        ctx.shadowColor = `hsla(${hue}, 100%, ${glowLightness}%, ${alpha * (isLightTheme ? 0.3 : 0.5)})`;
+                        ctx.shadowBlur = isLightTheme ? 4 : 8;
                         ctx.fillText(symbol, pos.x, pos.y);
                         ctx.shadowBlur = 0;
                     }
@@ -279,7 +306,7 @@ export function MathNatureBackground({
             window.removeEventListener('resize', updateSize);
             cancelAnimationFrame(animationRef.current);
         };
-    }, [opacity, speed]);
+    }, [opacity, speed, isLightTheme]);
 
     return (
         <canvas

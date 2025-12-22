@@ -10,6 +10,7 @@ import {
     slideTile,
     isSlidingComplete,
 } from '../../lib/puzzleUtils';
+import { useTheme } from '../../lib/ThemeContext';
 
 interface SlidingPuzzleProps {
     imageUrl: string;
@@ -18,6 +19,7 @@ interface SlidingPuzzleProps {
 }
 
 export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzleProps) {
+    const { theme } = useTheme();
     const [tiles, setTiles] = useState<SlidingTile[]>([]);
     const [moveCount, setMoveCount] = useState(0);
     const [imageLoaded, setImageLoaded] = useState(false);
@@ -141,7 +143,7 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
     const sortedTiles = [...tiles].sort((a, b) => a.currentIndex - b.currentIndex);
 
     return (
-        <div ref={containerRef} className="flex flex-col gap-4 h-full no-overscroll">
+        <div ref={containerRef} className="flex flex-col gap-4 h-full">
             {/* Instructions */}
             <div className="text-xs text-subtle text-center">
                 Tap tiles to slide • Arrow keys on desktop
@@ -153,8 +155,10 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
                 style={{
                     width: boardWidth,
                     height: boardHeight,
-                    backgroundColor: 'rgba(0,0,0,0.3)',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+                    backgroundColor: theme === 'light' ? 'rgba(200,195,185,0.5)' : 'rgba(0,0,0,0.3)',
+                    boxShadow: theme === 'light'
+                        ? '0 4px 16px rgba(0,0,0,0.15)'
+                        : '0 4px 24px rgba(0,0,0,0.4)',
                 }}
             >
                 {sortedTiles.map((tile, idx) => {
@@ -162,13 +166,15 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
                         return (
                             <div
                                 key={tile.id}
-                                className="absolute"
+                                className="absolute animate-pulse"
                                 style={{
                                     left: (idx % cols) * displayPieceWidth,
                                     top: Math.floor(idx / cols) * displayPieceHeight,
                                     width: displayPieceWidth,
                                     height: displayPieceHeight,
-                                    backgroundColor: 'rgba(0,0,0,0.5)',
+                                    backgroundColor: 'rgba(30, 30, 35, 0.85)',
+                                    boxShadow: 'inset 0 0 20px rgba(0,0,0,0.6), inset 0 0 4px rgba(100,200,255,0.3)',
+                                    border: '2px dashed rgba(100,200,255,0.4)',
                                 }}
                             />
                         );

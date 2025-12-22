@@ -3,7 +3,8 @@
 @theme {
   --font-display: "Syne", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  
+
+  /* Dark theme colors (default) */
   --color-void: #0a0a0f;
   --color-abyss: #12121a;
   --color-surface: #1a1a24;
@@ -12,12 +13,12 @@
   --color-subtle: #6a6a7a;
   --color-text: #e8e8f0;
   --color-bright: #ffffff;
-  
+
   --color-accent: #ff6b35;
   --color-accent-muted: #ff6b3580;
   --color-secondary: #00d4aa;
   --color-tertiary: #7c5cff;
-  
+
   --color-pixel: #ff3366;
   --color-geo: #00d4aa;
   --color-voxel: #7c5cff;
@@ -26,18 +27,36 @@
   --color-led: #00ff00;
 }
 
+/* Light theme overrides */
+:root[data-theme="light"] {
+  --color-void: #f8f6f1;
+  --color-abyss: #f0ede5;
+  --color-surface: #ffffff;
+  --color-elevated: #f5f3ee;
+  --color-muted: #e8e4db;
+  --color-subtle: #8a8578;
+  --color-text: #2c2a26;
+  --color-bright: #1a1917;
+
+  --color-accent: #e85a2b;
+  --color-accent-muted: #e85a2b40;
+  --color-secondary: #00a886;
+  --color-tertiary: #6b4ce0;
+}
+
 @layer base {
   html {
     font-family: var(--font-display);
     background-color: var(--color-void);
     color: var(--color-text);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
-  
+
   body {
     margin: 0;
     min-height: 100vh;
   }
-  
+
   #root {
     min-height: 100vh;
     display: flex;
@@ -52,28 +71,41 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
+
   .glow-accent {
     box-shadow: 0 0 20px var(--color-accent-muted), 0 0 40px var(--color-accent-muted);
   }
-  
+
   .glass {
     background: rgba(26, 26, 36, 0.8);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  
-  /* Puzzle touch handling - prevents scroll when dragging pieces */
+
+  /* Light mode glass effect */
+  :root[data-theme="light"] .glass {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  /* Puzzle piece touch handling - only on individual pieces, not containers */
   .puzzle-draggable {
     touch-action: none;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
   }
-  
-  /* Prevent overscroll/pull-to-refresh on puzzle pages */
-  .no-overscroll {
-    overscroll-behavior: none;
-    -webkit-overflow-scrolling: auto;
+
+  /* Theme toggle button styling */
+  .theme-toggle {
+    transition: transform 0.2s ease, background-color 0.3s ease;
+  }
+
+  .theme-toggle:hover {
+    transform: scale(1.1);
+  }
+
+  .theme-toggle:active {
+    transform: scale(0.95);
   }
 }

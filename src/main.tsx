@@ -68,13 +68,17 @@ Thought so. 💅
     'color: #74b9ff; font-size: 12px; padding: 10px 0;');
 };
 
+import { ThemeProvider } from './lib/ThemeContext';
+
 // Fire the console message when the app loads
 showConsoleMessage();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>,
 );
