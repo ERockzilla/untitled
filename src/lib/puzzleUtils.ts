@@ -7,7 +7,8 @@ export interface PuzzlePiece {
     currentRow: number;
     currentCol: number;
     rotation: number; // 0, 90, 180, 270
-    isPlaced: boolean;
+    isPlaced: boolean; // True if placed on the board (anywhere)
+    isLocked: boolean; // True if correctly placed and cannot be moved
     // Edge types: -1 = tab inward (hole), 0 = flat, 1 = tab outward
     edges: {
         top: -1 | 0 | 1;
@@ -101,6 +102,7 @@ export function generateJigsawPieces(config: PuzzleConfig): PuzzlePiece[] {
                 currentCol: -1,
                 rotation: 0,
                 isPlaced: false,
+                isLocked: false,
                 edges: {
                     top: row === 0 ? 0 : (-horizontalEdges[row - 1][col] as -1 | 1),
                     right: col === cols - 1 ? 0 : verticalEdges[row][col],
@@ -124,6 +126,7 @@ export function shuffleJigsawPieces(pieces: PuzzlePiece[]): PuzzlePiece[] {
         ...piece,
         rotation: rotations[Math.floor(Math.random() * 4)],
         isPlaced: false,
+        isLocked: false,
         currentRow: -1,
         currentCol: -1,
     })).sort(() => Math.random() - 0.5);
@@ -228,12 +231,7 @@ export function slideTile(tiles: SlidingTile[], tileIndex: number): SlidingTile[
  * Check if jigsaw puzzle is complete
  */
 export function isJigsawComplete(pieces: PuzzlePiece[]): boolean {
-    return pieces.every(
-        p => p.isPlaced &&
-            p.currentRow === p.correctRow &&
-            p.currentCol === p.correctCol &&
-            p.rotation === 0
-    );
+    return pieces.every(p => p.isLocked);
 }
 
 /**

@@ -62,4 +62,18 @@
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
+  
+  /* Puzzle touch handling - prevents scroll when dragging pieces */
+  .puzzle-draggable {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Prevent overscroll/pull-to-refresh on puzzle pages */
+  .no-overscroll {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
+  }
 }

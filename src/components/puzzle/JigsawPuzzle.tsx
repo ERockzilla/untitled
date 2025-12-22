@@ -97,7 +97,6 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
     const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
     const [imageLoaded, setImageLoaded] = useState(false);
-    const [wrongPlacement, setWrongPlacement] = useState<number | null>(null);
     const [containerWidth, setContainerWidth] = useState(480);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -150,6 +149,9 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
             const pieceIdx = pieces.findIndex(p => p.id === selectedPiece);
             if (pieceIdx === -1) return;
 
+            // Don't allow rotating locked pieces
+            if (pieces[pieceIdx].isLocked) return;
+
             let newRotation = pieces[pieceIdx].rotation;
 
             if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
@@ -185,6 +187,9 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
         const pieceIdx = pieces.findIndex(p => p.id === selectedPiece);
         if (pieceIdx === -1) return;
 
+        // Don't allow rotating locked pieces
+        if (pieces[pieceIdx].isLocked) return;
+
         const newRotation = (pieces[pieceIdx].rotation + direction * 90 + 360) % 360;
         const newPieces = [...pieces];
         newPieces[pieceIdx] = { ...newPieces[pieceIdx], rotation: newRotation };
@@ -199,7 +204,8 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
     // Unified drag start for mouse and touch
     const handleDragStart = useCallback((pieceId: number, clientX: number, clientY: number, target: HTMLElement) => {
         const piece = pieces.find(p => p.id === pieceId);
-        if (!piece || piece.isPlaced) return;
+        // Allow dragging if piece exists and is not locked (can drag both placed and unplaced pieces)
+        if (!piece || piece.isLocked) return;
 
         setDraggedPiece(pieceId);
         setSelectedPiece(pieceId);
@@ -219,9 +225,18 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
 
     const handleTouchStart = useCallback((pieceId: number, e: React.TouchEvent) => {
         if (e.touches.length !== 1) return;
+
+        const piece = pieces.find(p => p.id === pieceId);
+        // Allow dragging if piece exists and is not locked
+        if (!piece || piece.isLocked) return;
+
+        // Prevent scrolling immediately when touching a puzzle piece
+        e.preventDefault();
+        e.stopPropagation();
+
         const touch = e.touches[0];
         handleDragStart(pieceId, touch.clientX, touch.clientY, e.currentTarget as HTMLElement);
-    }, [handleDragStart]);
+    }, [handleDragStart, pieces]);
 
     // Unified move handler
     const handleMove = useCallback((clientX: number, clientY: number) => {
@@ -246,7 +261,7 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
         if (draggedPiece === null || !containerRef.current) return;
 
         const piece = pieces.find(p => p.id === draggedPiece);
-        if (!piece) {
+        if (!piece || piece.isLocked) {
             setDraggedPiece(null);
             return;
         }
@@ -261,36 +276,66 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
         const dropX = clientX - boardRect.left - tabOverflow;
         const dropY = clientY - boardRect.top - tabOverflow;
 
+        // Check if drop is within the board area
         if (dropX >= -tabOverflow && dropX < boardWidth + tabOverflow &&
             dropY >= -tabOverflow && dropY < boardHeight + tabOverflow) {
+
             const targetCol = Math.floor((dropX + displayPieceWidth / 2) / displayPieceWidth);
             const targetRow = Math.floor((dropY + displayPieceHeight / 2) / displayPieceHeight);
 
             const clampedCol = Math.max(0, Math.min(cols - 1, targetCol));
             const clampedRow = Math.max(0, Math.min(rows - 1, targetRow));
 
+            // Check if this is the correct position (correct location + correct rotation)
             const isCorrect =
                 clampedRow === piece.correctRow &&
                 clampedCol === piece.correctCol &&
                 piece.rotation === 0;
 
-            const spotTaken = pieces.some(
-                p => p.isPlaced && p.currentRow === clampedRow && p.currentCol === clampedCol
+            // Check if spot is taken by another piece
+            const existingPiece = pieces.find(
+                p => p.id !== piece.id && p.isPlaced && p.currentRow === clampedRow && p.currentCol === clampedCol
             );
 
-            if (!spotTaken) {
-                if (isCorrect) {
-                    const newPieces = pieces.map(p =>
-                        p.id === draggedPiece
-                            ? { ...p, isPlaced: true, currentRow: clampedRow, currentCol: clampedCol }
-                            : p
-                    );
-                    setPieces(newPieces);
-                } else {
-                    setWrongPlacement(draggedPiece);
-                    setTimeout(() => setWrongPlacement(null), 500);
-                }
+            // If spot has a LOCKED piece, can't place here
+            if (existingPiece?.isLocked) {
+                // Reject - can't place on a locked piece
+                setDraggedPiece(null);
+                return;
             }
+
+            // Place the piece (swap if there's an unlocked piece there)
+            const newPieces = pieces.map(p => {
+                if (p.id === draggedPiece) {
+                    // Place the dragged piece
+                    return {
+                        ...p,
+                        isPlaced: true,
+                        isLocked: isCorrect,
+                        currentRow: clampedRow,
+                        currentCol: clampedCol,
+                    };
+                }
+                if (existingPiece && p.id === existingPiece.id) {
+                    // Send the existing unlocked piece back to tray (swap positions)
+                    return {
+                        ...p,
+                        isPlaced: false,
+                        currentRow: -1,
+                        currentCol: -1,
+                    };
+                }
+                return p;
+            });
+            setPieces(newPieces);
+        } else {
+            // Dropped outside board - return piece to tray
+            const newPieces = pieces.map(p =>
+                p.id === draggedPiece
+                    ? { ...p, isPlaced: false, currentRow: -1, currentCol: -1 }
+                    : p
+            );
+            setPieces(newPieces);
         }
 
         setDraggedPiece(null);
@@ -310,11 +355,16 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
     const placedPieces = pieces.filter(p => p.isPlaced);
 
     // Render a puzzle piece with clip-path
-    const renderPiece = (piece: PuzzlePiece, displayWidth: number, displayHeight: number, forDrag = false) => {
+    // borderColor: undefined = default white border, string = custom color
+    const renderPiece = (piece: PuzzlePiece, displayWidth: number, displayHeight: number, forDrag = false, borderColor?: string) => {
         const clipId = `clip-${clipPathId}-${piece.id}${forDrag ? '-drag' : ''}`;
         const pathD = generatePuzzlePieceShape(piece.edges, 100, 100);
         const boundsWidth = 140;
         const boundsHeight = 140;
+
+        // Default stroke for tray pieces
+        const strokeColor = borderColor ?? 'rgba(255,255,255,0.4)';
+        const strokeWidth = borderColor ? 3 : 1.5;
 
         return (
             <div
@@ -352,12 +402,31 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                     <path
                         d={pathD}
                         fill="none"
-                        stroke="rgba(255,255,255,0.4)"
-                        strokeWidth="1.5"
+                        stroke={strokeColor}
+                        strokeWidth={strokeWidth}
                     />
                 </svg>
             </div>
         );
+    };
+
+    // Get border color for a placed piece based on its status
+    const getPieceBorderColor = (piece: PuzzlePiece): string | undefined => {
+        if (piece.isLocked) {
+            // Correct position and rotation - no visible border
+            return 'transparent';
+        }
+
+        const isCorrectRotation = piece.rotation === 0;
+        const isCorrectPosition = piece.currentRow === piece.correctRow && piece.currentCol === piece.correctCol;
+
+        if (isCorrectRotation && !isCorrectPosition) {
+            // Correct rotation but wrong position - yellow
+            return '#fbbf24'; // Tailwind yellow-400
+        }
+
+        // Wrong rotation (regardless of position) - red
+        return '#ef4444'; // Tailwind red-500
     };
 
     if (!imageLoaded) {
@@ -375,7 +444,7 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
     return (
         <div
             ref={containerRef}
-            className="flex flex-col gap-3 h-full select-none touch-none"
+            className="flex flex-col gap-3 h-full select-none touch-none no-overscroll"
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={() => setDraggedPiece(null)}
@@ -385,7 +454,9 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
         >
             {/* Instructions & Rotation Controls */}
             <div className="flex items-center justify-center gap-2 flex-wrap">
-                <span className="text-xs text-subtle">Tap to select • Rotate • Drag to place</span>
+                <span className="text-xs text-subtle">
+                    Drag to place • <span className="text-red-400">Red</span> = wrong rotation • <span className="text-yellow-400">Yellow</span> = wrong spot
+                </span>
             </div>
 
             {/* Rotation buttons for mobile */}
@@ -463,21 +534,33 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                     </svg>
                 </div>
 
-                {placedPieces.map(piece => (
-                    <div
-                        key={piece.id}
-                        className="absolute transition-all duration-200"
-                        style={{
-                            left: tabOverflow + piece.currentCol * displayPieceWidth - displayPieceWidth * 0.2,
-                            top: tabOverflow + piece.currentRow * displayPieceHeight - displayPieceHeight * 0.2,
-                            width: displayPieceWidth * 1.4,
-                            height: displayPieceHeight * 1.4,
-                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-                        }}
-                    >
-                        {renderPiece(piece, displayPieceWidth, displayPieceHeight)}
-                    </div>
-                ))}
+                {placedPieces.map(piece => {
+                    const borderColor = getPieceBorderColor(piece);
+                    const isDragging = draggedPiece === piece.id;
+                    const isSelected = selectedPiece === piece.id;
+                    const canDrag = !piece.isLocked;
+
+                    return (
+                        <div
+                            key={piece.id}
+                            className={`absolute transition-all duration-200 ${canDrag ? 'cursor-grab active:cursor-grabbing puzzle-draggable' : 'cursor-default'} ${isDragging ? 'opacity-30' : ''} ${isSelected && canDrag ? 'z-10' : ''}`}
+                            style={{
+                                left: tabOverflow + piece.currentCol * displayPieceWidth - displayPieceWidth * 0.2,
+                                top: tabOverflow + piece.currentRow * displayPieceHeight - displayPieceHeight * 0.2,
+                                width: displayPieceWidth * 1.4,
+                                height: displayPieceHeight * 1.4,
+                                filter: isSelected && canDrag
+                                    ? 'drop-shadow(0 4px 12px rgba(6, 182, 212, 0.4))'
+                                    : 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                            }}
+                            onClick={(e) => canDrag && handlePieceClick(piece.id, e)}
+                            onMouseDown={(e) => canDrag && handleMouseDown(piece.id, e)}
+                            onTouchStart={(e) => canDrag && handleTouchStart(piece.id, e)}
+                        >
+                            {renderPiece(piece, displayPieceWidth, displayPieceHeight, false, borderColor)}
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Piece Tray */}
@@ -489,7 +572,6 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                     {unplacedPieces.map(piece => {
                         const isSelected = selectedPiece === piece.id;
                         const isDragging = draggedPiece === piece.id;
-                        const isWrong = wrongPlacement === piece.id;
 
                         const trayPieceWidth = displayPieceWidth * trayScale;
                         const trayPieceHeight = displayPieceHeight * trayScale;
@@ -497,8 +579,8 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                         return (
                             <div
                                 key={piece.id}
-                                className={`cursor-grab active:cursor-grabbing transition-all duration-150 ${isSelected ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-transparent z-10 scale-110' : ''
-                                    } ${isDragging ? 'opacity-30' : ''} ${isWrong ? 'animate-shake' : ''}`}
+                                className={`cursor-grab active:cursor-grabbing transition-all duration-150 puzzle-draggable ${isSelected ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-transparent z-10 scale-110' : ''
+                                    } ${isDragging ? 'opacity-30' : ''}`}
                                 style={{
                                     width: trayPieceWidth * 1.4,
                                     height: trayPieceHeight * 1.4,
@@ -547,7 +629,7 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
 
             {/* Progress */}
             <div className="text-center text-sm text-subtle">
-                {placedPieces.length} / {pieces.length} pieces
+                {pieces.filter(p => p.isLocked).length} / {pieces.length} pieces locked
             </div>
 
             <style>{`

@@ -141,7 +141,7 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
     const sortedTiles = [...tiles].sort((a, b) => a.currentIndex - b.currentIndex);
 
     return (
-        <div ref={containerRef} className="flex flex-col gap-4 h-full">
+        <div ref={containerRef} className="flex flex-col gap-4 h-full no-overscroll">
             {/* Instructions */}
             <div className="text-xs text-subtle text-center">
                 Tap tiles to slide • Arrow keys on desktop
@@ -184,7 +184,7 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
                     return (
                         <div
                             key={tile.id}
-                            className={`absolute transition-all duration-200 ease-out ${canMove ? 'cursor-pointer active:scale-95' : 'cursor-default'
+                            className={`absolute transition-all duration-200 ease-out puzzle-draggable ${canMove ? 'cursor-pointer active:scale-95' : 'cursor-default'
                                 }`}
                             style={{
                                 left: currentCol * displayPieceWidth,
