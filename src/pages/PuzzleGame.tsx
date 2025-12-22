@@ -162,40 +162,15 @@ export function PuzzleGame() {
 
             {/* Main content */}
             <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-                {/* Puzzle area */}
-                <div className="flex-1 flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6 overflow-auto">
-                    {puzzleConfig ? (
-                        <div className="w-full max-w-2xl">
-                            {mode === 'jigsaw' ? (
-                                <JigsawPuzzle
-                                    key={`jigsaw-${selectedImage.id}-${difficulty}-${resetKey}`}
-                                    imageUrl={selectedImage.src}
-                                    config={puzzleConfig}
-                                    onComplete={handleComplete}
-                                />
-                            ) : (
-                                <SlidingPuzzle
-                                    key={`sliding-${selectedImage.id}-${difficulty}-${resetKey}`}
-                                    imageUrl={selectedImage.src}
-                                    config={puzzleConfig}
-                                    onComplete={handleComplete}
-                                />
-                            )}
-                        </div>
-                    ) : (
-                        <div className="text-subtle animate-pulse">Loading image...</div>
-                    )}
-                </div>
-
-                {/* Controls sidebar */}
-                <aside className="w-full lg:w-72 xl:w-80 p-4 sm:p-6 border-t lg:border-t-0 lg:border-l border-elevated overflow-auto">
+                {/* Controls sidebar - appears first (top on mobile, left on desktop) */}
+                <aside className="w-full lg:w-72 xl:w-80 p-4 sm:p-6 border-b lg:border-b-0 lg:border-r border-elevated overflow-auto">
                     <div className="space-y-4 sm:space-y-6">
                         {/* Image selector */}
                         <div>
                             <label className="block text-sm font-medium text-text mb-3">
                                 Select Image
                             </label>
-                            <div className="grid grid-cols-5 gap-2">
+                            <div className="grid grid-cols-6 gap-2">
                                 {PUZZLE_IMAGES.map(img => {
                                     const p = progress[img.id];
                                     const bothDone = p?.jigsaw && p?.sliding;
@@ -226,100 +201,131 @@ export function PuzzleGame() {
                             </div>
                         </div>
 
-                        {/* Puzzle mode */}
-                        <div>
-                            <label className="block text-sm font-medium text-text mb-3">
-                                Puzzle Mode
-                            </label>
-                            <div className="grid grid-cols-2 gap-2">
-                                {(['jigsaw', 'sliding'] as const).map(m => {
-                                    const isDone = progress[selectedImage.id]?.[m];
-                                    return (
+                        {/* Puzzle mode and Difficulty in a row on mobile */}
+                        <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
+                            {/* Puzzle mode */}
+                            <div>
+                                <label className="block text-sm font-medium text-text mb-2">
+                                    Puzzle Mode
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {(['jigsaw', 'sliding'] as const).map(m => {
+                                        const isDone = progress[selectedImage.id]?.[m];
+                                        return (
+                                            <button
+                                                key={m}
+                                                onClick={() => setMode(m)}
+                                                className={`px-3 py-2 rounded-lg text-sm transition-all ${mode === m
+                                                    ? 'bg-cyan-500 text-void font-medium'
+                                                    : 'bg-elevated text-text hover:bg-muted'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center justify-center gap-1">
+                                                    {m === 'jigsaw' ? '🧩' : '🔲'}
+                                                    <span className="capitalize hidden sm:inline">{m}</span>
+                                                    {isDone && <span className="text-green-400">✓</span>}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Difficulty */}
+                            <div>
+                                <label className="block text-sm font-medium text-text mb-2">
+                                    Difficulty
+                                </label>
+                                <div className="grid grid-cols-3 gap-1">
+                                    {(Object.keys(DIFFICULTY_CONFIGS) as Difficulty[]).map(d => (
                                         <button
-                                            key={m}
-                                            onClick={() => setMode(m)}
-                                            className={`px-4 py-3 rounded-lg text-sm transition-all ${mode === m
+                                            key={d}
+                                            onClick={() => setDifficulty(d)}
+                                            className={`px-2 py-2 rounded-lg text-xs transition-all ${difficulty === d
                                                 ? 'bg-cyan-500 text-void font-medium'
                                                 : 'bg-elevated text-text hover:bg-muted'
                                                 }`}
                                         >
-                                            <div className="flex items-center justify-center gap-2">
-                                                {m === 'jigsaw' ? '🧩' : '🔲'}
-                                                <span className="capitalize">{m}</span>
-                                                {isDone && <span className="text-green-400">✓</span>}
-                                            </div>
+                                            {DIFFICULTY_CONFIGS[d].label}
                                         </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Difficulty */}
-                        <div>
-                            <label className="block text-sm font-medium text-text mb-3">
-                                Difficulty
-                            </label>
-                            <div className="grid grid-cols-3 gap-2">
-                                {(Object.keys(DIFFICULTY_CONFIGS) as Difficulty[]).map(d => (
-                                    <button
-                                        key={d}
-                                        onClick={() => setDifficulty(d)}
-                                        className={`px-3 py-2 rounded-lg text-sm transition-all ${difficulty === d
-                                            ? 'bg-cyan-500 text-void font-medium'
-                                            : 'bg-elevated text-text hover:bg-muted'
-                                            }`}
-                                    >
-                                        {DIFFICULTY_CONFIGS[d].label}
-                                    </button>
-                                ))}
-                            </div>
-                            {puzzleConfig && (
-                                <p className="text-xs text-subtle mt-2">
-                                    Grid: {puzzleConfig.cols} × {puzzleConfig.rows} = {puzzleConfig.cols * puzzleConfig.rows} pieces
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Reset button */}
-                        <button
-                            onClick={handleReset}
-                            className="w-full px-4 py-3 rounded-lg bg-elevated hover:bg-muted text-text transition-colors"
-                        >
-                            Reset Current Puzzle
-                        </button>
-
-                        {/* Current status */}
-                        {isCurrentComplete && (
-                            <div className="p-4 rounded-lg bg-green-500/20 border border-green-500/30">
-                                <div className="flex items-center gap-2 text-green-400">
-                                    <span>✓</span>
-                                    <span className="text-sm font-medium">
-                                        {selectedImage.name} {mode} completed!
-                                    </span>
+                                    ))}
                                 </div>
+                                {puzzleConfig && (
+                                    <p className="text-xs text-subtle mt-1">
+                                        {puzzleConfig.cols}×{puzzleConfig.rows} = {puzzleConfig.cols * puzzleConfig.rows} pieces
+                                    </p>
+                                )}
                             </div>
-                        )}
+                        </div>
 
-                        {/* Instructions */}
-                        <div className="p-4 bg-elevated rounded-lg">
-                            <h3 className="text-sm font-medium text-text mb-2">How to Play</h3>
-                            {mode === 'jigsaw' ? (
-                                <ul className="text-xs text-subtle space-y-1">
-                                    <li>• Click a piece to select it</li>
-                                    <li>• Use arrow keys to rotate 90°</li>
-                                    <li>• Drag pieces to the correct spot</li>
-                                    <li>• Pieces must be correctly rotated to snap</li>
-                                </ul>
-                            ) : (
-                                <ul className="text-xs text-subtle space-y-1">
-                                    <li>• Click tiles adjacent to the empty space</li>
-                                    <li>• Or use arrow keys to slide tiles</li>
-                                    <li>• Arrange all tiles in order</li>
-                                </ul>
+                        {/* Reset and status - hidden on mobile to save space */}
+                        <div className="hidden lg:block space-y-4">
+                            {/* Reset button */}
+                            <button
+                                onClick={handleReset}
+                                className="w-full px-4 py-3 rounded-lg bg-elevated hover:bg-muted text-text transition-colors"
+                            >
+                                Reset Current Puzzle
+                            </button>
+
+                            {/* Current status */}
+                            {isCurrentComplete && (
+                                <div className="p-4 rounded-lg bg-green-500/20 border border-green-500/30">
+                                    <div className="flex items-center gap-2 text-green-400">
+                                        <span>✓</span>
+                                        <span className="text-sm font-medium">
+                                            {selectedImage.name} {mode} completed!
+                                        </span>
+                                    </div>
+                                </div>
                             )}
+
+                            {/* Instructions */}
+                            <div className="p-4 bg-elevated rounded-lg">
+                                <h3 className="text-sm font-medium text-text mb-2">How to Play</h3>
+                                {mode === 'jigsaw' ? (
+                                    <ul className="text-xs text-subtle space-y-1">
+                                        <li>• Click a piece to select it</li>
+                                        <li>• Use arrow keys to rotate 90°</li>
+                                        <li>• Drag pieces to the correct spot</li>
+                                        <li>• Pieces must be correctly rotated to snap</li>
+                                    </ul>
+                                ) : (
+                                    <ul className="text-xs text-subtle space-y-1">
+                                        <li>• Click tiles adjacent to the empty space</li>
+                                        <li>• Or use arrow keys to slide tiles</li>
+                                        <li>• Arrange all tiles in order</li>
+                                    </ul>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </aside>
+
+                {/* Puzzle area */}
+                <div className="flex-1 flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6 overflow-auto">
+                    {puzzleConfig ? (
+                        <div className="w-full max-w-2xl">
+                            {mode === 'jigsaw' ? (
+                                <JigsawPuzzle
+                                    key={`jigsaw-${selectedImage.id}-${difficulty}-${resetKey}`}
+                                    imageUrl={selectedImage.src}
+                                    config={puzzleConfig}
+                                    onComplete={handleComplete}
+                                />
+                            ) : (
+                                <SlidingPuzzle
+                                    key={`sliding-${selectedImage.id}-${difficulty}-${resetKey}`}
+                                    imageUrl={selectedImage.src}
+                                    config={puzzleConfig}
+                                    onComplete={handleComplete}
+                                />
+                            )}
+                        </div>
+                    ) : (
+                        <div className="text-subtle animate-pulse">Loading image...</div>
+                    )}
+                </div>
             </main>
 
             {/* Congratulations Modal */}
