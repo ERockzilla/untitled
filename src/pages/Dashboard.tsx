@@ -205,6 +205,54 @@ export function Dashboard() {
             );
           })}
         </div>
+
+        {/* Interactive Games Section */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-text mb-8">Interactive Games</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Link
+              to="/puzzle"
+              className="group relative overflow-hidden rounded-2xl bg-surface border border-elevated hover:border-muted transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+            >
+              {/* Preview area */}
+              <div
+                className="h-48 flex items-center justify-center overflow-hidden"
+                style={{ backgroundColor: 'color-mix(in srgb, #f59e0b 5%, var(--color-void))' }}
+              >
+                <div className="text-7xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
+                  🧩
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: '#f59e0b' }}
+                  />
+                  <h3 className="text-lg font-semibold text-text">Interactive Puzzles</h3>
+                </div>
+                <p className="text-sm text-subtle">
+                  Classic jigsaw and sliding puzzles with your own images
+                </p>
+                <div className="mt-4 pt-4 border-t border-elevated">
+                  <div className="flex gap-3 text-xs text-subtle">
+                    <span className="px-2 py-1 bg-elevated rounded">🧩 Jigsaw</span>
+                    <span className="px-2 py-1 bg-elevated rounded">🔲 Sliding</span>
+                    <span className="px-2 py-1 bg-elevated rounded">3 Difficulties</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hover accent */}
+              <div
+                className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"
+                style={{ backgroundColor: '#f59e0b' }}
+              />
+            </Link>
+          </div>
+        </div>
       </main>
 
       {/* About Section */}
