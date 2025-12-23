@@ -131,8 +131,12 @@ export function Dashboard() {
               <div className="text-sm text-subtle">Libraries</div>
             </div>
             <div className="text-center">
+              <div className="text-3xl font-bold" style={{ color: '#f59e0b' }}>1</div>
+              <div className="text-sm text-subtle">Game</div>
+            </div>
+            <div className="text-center">
               <div className="text-3xl font-bold text-secondary">∞</div>
-              <div className="text-sm text-subtle">Possibilities</div>
+              <div className="text-sm text-subtle">Fun</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-tertiary">

@@ -36,9 +36,9 @@ export interface SlidingTile {
 
 // Difficulty multipliers (higher = smaller pieces = more pieces)
 export const DIFFICULTY_CONFIGS = {
-    easy: { pixelsPerPiece: 150, label: 'Easy' },
-    medium: { pixelsPerPiece: 100, label: 'Medium' },
-    hard: { pixelsPerPiece: 75, label: 'Hard' },
+    easy: { pixelsPerPiece: 150, label: '1' },
+    medium: { pixelsPerPiece: 100, label: '2' },
+    hard: { pixelsPerPiece: 75, label: '3' },
 } as const;
 
 export type Difficulty = keyof typeof DIFFICULTY_CONFIGS;

@@ -44,11 +44,28 @@ export function PuzzleGame() {
 
     // Load image dimensions when image changes
     useEffect(() => {
+        // Reset dimensions first to trigger loading state
+        setImageDimensions(null);
+
         const img = new Image();
+
         img.onload = () => {
             setImageDimensions({ width: img.width, height: img.height });
         };
+
+        img.onerror = () => {
+            console.error('Failed to load image:', selectedImage.src);
+            // Fallback to default dimensions
+            setImageDimensions({ width: 800, height: 600 });
+        };
+
         img.src = selectedImage.src;
+
+        // If the image is already cached, onload might have fired synchronously
+        // or might not fire at all in some browsers, so check complete status
+        if (img.complete && img.naturalWidth > 0) {
+            setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+        }
     }, [selectedImage]);
 
     // Calculate puzzle config based on image dimensions and difficulty
@@ -101,63 +118,79 @@ export function PuzzleGame() {
     return (
         <div className="min-h-screen flex flex-col">
             {/* Header */}
-            <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-elevated gap-2">
-                <div className="flex items-center gap-2 sm:gap-4">
-                    <Link
-                        to="/"
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-elevated hover:bg-muted transition-colors flex items-center justify-center text-subtle hover:text-text flex-shrink-0"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                    </Link>
-                    <div className="min-w-0">
-                        <h1 className="text-base sm:text-xl font-bold truncate" style={{ color: 'var(--color-accent, #06b6d4)' }}>
+            <header className="border-b border-elevated">
+                {/* Top row - title and controls */}
+                <div className="flex items-center justify-between px-4 sm:px-6 py-2 gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <Link
+                            to="/"
+                            className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-elevated hover:bg-muted transition-colors flex items-center justify-center text-subtle hover:text-text flex-shrink-0"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                        </Link>
+                        <h1 className="text-sm sm:text-lg font-bold truncate" style={{ color: 'var(--color-accent, #06b6d4)' }}>
                             Interactive Puzzles
                         </h1>
-                        <p className="text-xs sm:text-sm text-subtle">
-                            {progressStats.completed} / {progressStats.total} completed
-                        </p>
+                    </div>
+
+                    {/* Stats inline on mobile, separate row on desktop */}
+                    <div className="flex items-center gap-4 sm:gap-6">
+                        <div className="flex items-center gap-3 sm:gap-5 text-center">
+                            <div>
+                                <span className="text-sm sm:text-base font-bold text-accent">1</span>
+                                <span className="text-xs text-subtle ml-1">Game</span>
+                            </div>
+                            <div>
+                                <span className="text-sm sm:text-base font-bold text-secondary">∞</span>
+                                <span className="text-xs text-subtle ml-1">Fun</span>
+                            </div>
+                            <div>
+                                <span className="text-sm sm:text-base font-bold text-tertiary">{progressStats.completed}</span>
+                                <span className="text-xs text-subtle ml-1">Done</span>
+                            </div>
+                        </div>
+
+                        {/* Progress dots - hidden on small screens */}
+                        <div className="hidden md:flex items-center gap-1">
+                            {PUZZLE_IMAGES.map(img => {
+                                const p = progress[img.id];
+                                const jigsawDone = p?.jigsaw;
+                                const slidingDone = p?.sliding;
+                                return (
+                                    <div key={img.id} className="flex gap-0.5">
+                                        <div
+                                            className={`w-2 h-2 rounded-sm ${jigsawDone ? 'bg-green-500' : 'bg-elevated'}`}
+                                            title={`${img.name} Jigsaw`}
+                                        />
+                                        <div
+                                            className={`w-2 h-2 rounded-sm ${slidingDone ? 'bg-green-500' : 'bg-elevated'}`}
+                                            title={`${img.name} Sliding`}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Theme toggle button */}
+                        <button
+                            onClick={toggleTheme}
+                            className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-elevated hover:bg-muted transition-colors flex items-center justify-center text-subtle hover:text-text theme-toggle"
+                            title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                        >
+                            {theme === 'light' ? (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            )}
+                        </button>
                     </div>
                 </div>
-
-                {/* Progress indicator - hidden on very small screens */}
-                <div className="hidden sm:flex items-center gap-2">
-                    {PUZZLE_IMAGES.map(img => {
-                        const p = progress[img.id];
-                        const jigsawDone = p?.jigsaw;
-                        const slidingDone = p?.sliding;
-                        return (
-                            <div key={img.id} className="flex gap-0.5">
-                                <div
-                                    className={`w-3 h-3 rounded-sm ${jigsawDone ? 'bg-green-500' : 'bg-elevated'}`}
-                                    title={`${img.name} Jigsaw`}
-                                />
-                                <div
-                                    className={`w-3 h-3 rounded-sm ${slidingDone ? 'bg-green-500' : 'bg-elevated'}`}
-                                    title={`${img.name} Sliding`}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Theme toggle button */}
-                <button
-                    onClick={toggleTheme}
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-elevated hover:bg-muted transition-colors flex items-center justify-center text-subtle hover:text-text theme-toggle"
-                    title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-                >
-                    {theme === 'light' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                        </svg>
-                    ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                    )}
-                </button>
             </header>
 
             {/* Main content */}
@@ -231,10 +264,10 @@ export function PuzzleGame() {
                                 </div>
                             </div>
 
-                            {/* Difficulty */}
+                            {/* Level */}
                             <div>
                                 <label className="block text-sm font-medium text-text mb-2">
-                                    Difficulty
+                                    Level
                                 </label>
                                 <div className="grid grid-cols-3 gap-1">
                                     {(Object.keys(DIFFICULTY_CONFIGS) as Difficulty[]).map(d => (
