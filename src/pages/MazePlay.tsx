@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MazeRunner } from '../components/maze/MazeRunner';
-import { MazeRunner3D } from '../components/maze/MazeRunner3D';
+import { MazeScene3D } from '../components/maze/MazeScene3D';
 import type { CharacterType, Difficulty } from '../lib/mazeUtils';
 import { saveScore, formatTime, MAZE_CONFIGS, CHARACTERS } from '../lib/mazeUtils';
 
@@ -45,7 +45,7 @@ export function MazePlay() {
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-void)' }}>
             {viewMode === '3d' ? (
-                <MazeRunner3D
+                <MazeScene3D
                     size={size}
                     character={character}
                     controlMode={controlMode}

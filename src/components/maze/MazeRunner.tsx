@@ -8,6 +8,7 @@ import {
     CHARACTERS,
 } from '../../lib/mazeUtils';
 import { useTheme } from '../../lib/ThemeContext';
+import { DPad } from './DPad';
 
 interface MazeRunnerProps {
     size: number;
@@ -28,11 +29,20 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
     const [isPlaying, setIsPlaying] = useState(false);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [elapsedTime, setElapsedTime] = useState(0);
-    const [canvasSize, setCanvasSize] = useState(300);
+    const [viewportSize, setViewportSize] = useState(400);
     const [tiltPermission, setTiltPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
+    const [zoom, setZoom] = useState(1); // 1 = full maze visible, 2 = zoomed in 2x, etc.
+    const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
 
-    const cellSize = canvasSize / size;
+    // Calculate base cell size assuming full maze visible
+    const baseCellSize = viewportSize / size;
+    // Effective cell size based on zoom
+    const cellSize = baseCellSize * zoom;
     const playerRadius = cellSize * 0.35;
+
+    // Detect if user is on mobile device
+    const isMobile = typeof window !== 'undefined' &&
+        ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
     // Initialize maze
     useEffect(() => {
@@ -46,19 +56,62 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
         setElapsedTime(0);
     }, [size, cellSize]);
 
-    // Update canvas size based on container
+    // Update viewport size based on container
     useEffect(() => {
         const updateSize = () => {
             if (containerRef.current) {
                 const rect = containerRef.current.getBoundingClientRect();
-                const minDim = Math.min(rect.width - 32, rect.height - 100, 500);
-                setCanvasSize(Math.max(280, minDim));
+                const minDim = Math.min(rect.width - 32, rect.height - 100, 600);
+                setViewportSize(Math.max(300, minDim));
             }
         };
         updateSize();
         window.addEventListener('resize', updateSize);
         return () => window.removeEventListener('resize', updateSize);
     }, []);
+
+    // Auto-zoom for larger mazes
+    useEffect(() => {
+        if (size >= 35) {
+            setZoom(2.5); // Zoom in more for extreme
+        } else if (size >= 20) {
+            setZoom(1.5); // Zoom in for hard
+        } else {
+            setZoom(1); // Full view for easy/medium
+        }
+    }, [size]);
+
+    // Update camera to follow player when zoomed in
+    useEffect(() => {
+        if (zoom > 1 && maze) {
+            const mazeWidth = maze.cols * cellSize;
+            const mazeHeight = maze.rows * cellSize;
+            const halfViewport = viewportSize / 2;
+
+            // Center camera on player
+            let offsetX = playerPos.x - halfViewport;
+            let offsetY = playerPos.y - halfViewport;
+
+            // Clamp to maze boundaries
+            offsetX = Math.max(0, Math.min(offsetX, mazeWidth - viewportSize));
+            offsetY = Math.max(0, Math.min(offsetY, mazeHeight - viewportSize));
+
+            setCameraOffset({ x: offsetX, y: offsetY });
+        } else {
+            setCameraOffset({ x: 0, y: 0 });
+        }
+    }, [playerPos, zoom, maze, cellSize, viewportSize]);
+
+    // Handle zoom with scroll wheel
+    const handleWheel = useCallback((e: React.WheelEvent) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.2 : 0.2;
+        setZoom(z => Math.max(1, Math.min(4, z + delta)));
+    }, []);
+
+    // Zoom buttons handler
+    const handleZoomIn = () => setZoom(z => Math.min(4, z + 0.5));
+    const handleZoomOut = () => setZoom(z => Math.max(1, z - 0.5));
 
     // Timer
     useEffect(() => {
@@ -84,22 +137,23 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
         }
     }, []);
 
-    // Tilt controls
+    // Tilt controls - reduced sensitivity to prevent wall clipping
     useEffect(() => {
         if (controlMode !== 'tilt' || tiltPermission !== 'granted') return;
 
         const handleOrientation = (e: DeviceOrientationEvent) => {
             if (!isPlaying) return;
 
-            const gamma = e.gamma || 0; // Left/right tilt (-90 to 90)
-            const beta = e.beta || 0;   // Front/back tilt (-180 to 180)
+            const gamma = e.gamma || 0;
+            const beta = e.beta || 0;
 
-            // Sensitivity factor - increased for faster movement
-            const sensitivity = 0.06;
+            // Reduced sensitivity for better collision handling
+            const sensitivity = 0.025;
+            const maxVel = 3; // Lower max velocity
 
             setVelocity(v => ({
-                x: v.x * 0.9 + gamma * sensitivity,
-                y: v.y * 0.9 + (beta - 45) * sensitivity, // Offset for natural phone holding angle
+                x: Math.max(-maxVel, Math.min(maxVel, v.x * 0.85 + gamma * sensitivity)),
+                y: Math.max(-maxVel, Math.min(maxVel, v.y * 0.85 + (beta - 45) * sensitivity)),
             }));
         };
 
@@ -107,45 +161,26 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
         return () => window.removeEventListener('deviceorientation', handleOrientation);
     }, [controlMode, tiltPermission, isPlaying]);
 
-    // Touch controls (swipe direction)
-    const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-
-    const handleTouchStart = useCallback((e: React.TouchEvent) => {
-        if (controlMode !== 'touch') return;
-        const touch = e.touches[0];
-        touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-    }, [controlMode]);
-
-    const handleTouchMove = useCallback((e: React.TouchEvent) => {
-        if (controlMode !== 'touch' || !touchStartRef.current) return;
-        e.preventDefault();
-
-        const touch = e.touches[0];
-        const dx = touch.clientX - touchStartRef.current.x;
-        const dy = touch.clientY - touchStartRef.current.y;
-
-        // Update velocity based on drag distance
-        const sensitivity = 0.25;
-        const maxVelocity = 12;
-
+    // D-pad direction handler for touch mode
+    const handleDPadDirection = useCallback((dir: { x: number; y: number }) => {
+        const speed = 3;
         setVelocity({
-            x: Math.max(-maxVelocity, Math.min(maxVelocity, dx * sensitivity)),
-            y: Math.max(-maxVelocity, Math.min(maxVelocity, dy * sensitivity)),
+            x: dir.x * speed,
+            y: dir.y * speed,
         });
-    }, [controlMode]);
-
-    const handleTouchEnd = useCallback(() => {
-        touchStartRef.current = null;
-        // Apply friction
-        setVelocity(v => ({ x: v.x * 0.8, y: v.y * 0.8 }));
     }, []);
+
+    // Swipe touch controls are disabled - use D-pad instead
+    const handleTouchStart = useCallback(() => { }, []);
+    const handleTouchMove = useCallback(() => { }, []);
+    const handleTouchEnd = useCallback(() => { }, []);
 
     // Keyboard controls (desktop fallback)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!isPlaying) return;
 
-            const speed = 6;
+            const speed = 3;
             switch (e.key) {
                 case 'ArrowUp':
                 case 'w':
@@ -187,19 +222,39 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
         };
     }, [isPlaying]);
 
-    // Game loop - update player position
+    // Game loop - update player position with step-based collision
     useEffect(() => {
         if (!maze || !isPlaying) return;
 
         const gameLoop = setInterval(() => {
             setPlayerPos(pos => {
-                let newX = pos.x + velocity.x;
-                let newY = pos.y + velocity.y;
+                // Step-based movement to prevent wall clipping
+                const steps = 4; // Break movement into smaller steps
+                let newX = pos.x;
+                let newY = pos.y;
+                const stepX = velocity.x / steps;
+                const stepY = velocity.y / steps;
 
-                // Check wall collisions
-                const collision = checkWallCollision(maze, newX, newY, playerRadius, cellSize);
-                newX = collision.adjustedX;
-                newY = collision.adjustedY;
+                for (let i = 0; i < steps; i++) {
+                    // Try X movement
+                    const tryX = newX + stepX;
+                    const collisionX = checkWallCollision(maze, tryX, newY, playerRadius, cellSize);
+                    if (!collisionX.blocked || Math.abs(collisionX.adjustedX - tryX) < 0.1) {
+                        newX = collisionX.adjustedX;
+                    }
+
+                    // Try Y movement
+                    const tryY = newY + stepY;
+                    const collisionY = checkWallCollision(maze, newX, tryY, playerRadius, cellSize);
+                    if (!collisionY.blocked || Math.abs(collisionY.adjustedY - tryY) < 0.1) {
+                        newY = collisionY.adjustedY;
+                    }
+                }
+
+                // Final collision check
+                const finalCollision = checkWallCollision(maze, newX, newY, playerRadius, cellSize);
+                newX = finalCollision.adjustedX;
+                newY = finalCollision.adjustedY;
 
                 // Check if reached finish
                 if (hasReachedFinish(maze, newX, newY, cellSize)) {
@@ -212,8 +267,8 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
 
             // Apply friction to velocity
             setVelocity(v => ({
-                x: v.x * 0.95,
-                y: v.y * 0.95,
+                x: v.x * 0.92,
+                y: v.y * 0.92,
             }));
         }, 16); // ~60fps
 
@@ -230,9 +285,12 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
 
         const isDark = theme === 'dark';
 
-        // Clear canvas
+        // Get the full maze size (zoomed)
+        const fullMazeSize = size * cellSize;
+
+        // Clear canvas with full maze size
         ctx.fillStyle = isDark ? '#0f0f12' : '#f5f3ee';
-        ctx.fillRect(0, 0, canvasSize, canvasSize);
+        ctx.fillRect(0, 0, fullMazeSize, fullMazeSize);
 
         // Draw grid pattern (subtle)
         ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)';
@@ -240,11 +298,11 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
         for (let i = 0; i <= size; i++) {
             ctx.beginPath();
             ctx.moveTo(i * cellSize, 0);
-            ctx.lineTo(i * cellSize, canvasSize);
+            ctx.lineTo(i * cellSize, fullMazeSize);
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(0, i * cellSize);
-            ctx.lineTo(canvasSize, i * cellSize);
+            ctx.lineTo(fullMazeSize, i * cellSize);
             ctx.stroke();
         }
 
@@ -301,13 +359,25 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
         ctx.textBaseline = 'middle';
         ctx.fillText('🟢', startX, startY);
 
-        // Draw finish marker
+        // Draw finish marker with pulsing effect
         const finishX = maze.finish.col * cellSize + cellSize / 2;
         const finishY = maze.finish.row * cellSize + cellSize / 2;
-        ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
+
+        // Pulsing glow effect
+        const pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+        ctx.fillStyle = `rgba(6, 182, 212, ${0.4 * pulse})`;
         ctx.beginPath();
-        ctx.arc(finishX, finishY, cellSize * 0.4, 0, Math.PI * 2);
+        ctx.arc(finishX, finishY, cellSize * (0.6 * pulse), 0, Math.PI * 2);
         ctx.fill();
+
+        // Inner solid circle
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.8)';
+        ctx.beginPath();
+        ctx.arc(finishX, finishY, cellSize * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Flag icon
+        ctx.font = `${cellSize * 0.5}px sans-serif`;
         ctx.fillText('🏁', finishX, finishY);
 
         // Draw player
@@ -340,7 +410,7 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
             ctx.fillText(charData.emoji, playerPos.x, playerPos.y);
         }
 
-    }, [maze, playerPos, canvasSize, cellSize, character, theme, size]);
+    }, [maze, playerPos, cellSize, character, theme, size, cameraOffset, viewportSize]);
 
     const formatTimeDisplay = (ms: number) => {
         const seconds = Math.floor(ms / 1000);
@@ -401,24 +471,68 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
             <div className="text-xs text-subtle text-center">
                 {controlMode === 'tilt'
                     ? 'Tilt your device to roll through the maze'
-                    : 'Drag to move • Arrow keys on desktop'}
+                    : isMobile ? 'Use the D-pad below' : 'Use arrow keys or WASD'}
             </div>
 
-            {/* Maze canvas */}
-            <canvas
-                ref={canvasRef}
-                width={canvasSize}
-                height={canvasSize}
-                className="rounded-lg shadow-lg touch-none"
+            {/* Maze canvas container with clipping */}
+            <div
+                className="relative overflow-hidden rounded-lg shadow-lg"
                 style={{
+                    width: viewportSize,
+                    height: viewportSize,
                     boxShadow: theme === 'dark'
                         ? '0 4px 24px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(6,182,212,0.2)'
                         : '0 4px 16px rgba(0,0,0,0.15)',
                 }}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-            />
+                onWheel={handleWheel}
+            >
+                <canvas
+                    ref={canvasRef}
+                    width={size * cellSize}
+                    height={size * cellSize}
+                    className="touch-none"
+                    style={{
+                        position: 'absolute',
+                        left: -cameraOffset.x,
+                        top: -cameraOffset.y,
+                        width: size * cellSize,
+                        height: size * cellSize,
+                    }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                />
+
+                {/* Zoom controls */}
+                <div className="absolute top-2 right-2 flex flex-col gap-1 z-10">
+                    <button
+                        onClick={handleZoomIn}
+                        className="w-8 h-8 rounded bg-black/40 text-white hover:bg-black/60 transition-colors flex items-center justify-center text-lg font-bold"
+                        title="Zoom In"
+                    >
+                        +
+                    </button>
+                    <button
+                        onClick={handleZoomOut}
+                        className="w-8 h-8 rounded bg-black/40 text-white hover:bg-black/60 transition-colors flex items-center justify-center text-lg font-bold"
+                        title="Zoom Out"
+                    >
+                        −
+                    </button>
+                </div>
+
+                {/* Zoom level indicator */}
+                <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/40 text-white text-xs">
+                    {zoom.toFixed(1)}x
+                </div>
+            </div>
+
+            {/* D-pad for touch mode on mobile only - positioned BELOW the maze */}
+            {controlMode === 'touch' && isMobile && (
+                <div className="mt-4 flex justify-center">
+                    <DPad onDirectionChange={handleDPadDirection} size={140} />
+                </div>
+            )}
 
             {/* Character indicator */}
             <div className="flex items-center gap-2 text-sm text-subtle">

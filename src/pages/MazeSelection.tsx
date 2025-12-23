@@ -145,8 +145,8 @@ export function MazeSelection() {
                             >
                                 <span className="text-2xl">📱</span>
                                 <span className="font-medium">Tilt</span>
-                                <span className={`text-xs ${controlMode === 'tilt' ? 'text-void/70' : 'text-subtle'}`}>
-                                    Tilt your device
+                                <span className={`text-xs text-center ${controlMode === 'tilt' ? 'text-void/70' : 'text-subtle'}`}>
+                                    Mobile only
                                 </span>
                             </button>
                             <button
@@ -156,10 +156,10 @@ export function MazeSelection() {
                                     : 'bg-elevated text-text hover:bg-muted'
                                     }`}
                             >
-                                <span className="text-2xl">👆</span>
-                                <span className="font-medium">Touch</span>
-                                <span className={`text-xs ${controlMode === 'touch' ? 'text-void/70' : 'text-subtle'}`}>
-                                    Drag to move
+                                <span className="text-2xl">⌨️</span>
+                                <span className="font-medium">Keyboard</span>
+                                <span className={`text-xs text-center ${controlMode === 'touch' ? 'text-void/70' : 'text-subtle'}`}>
+                                    Arrow keys / WASD
                                 </span>
                             </button>
                         </div>
@@ -175,27 +175,27 @@ export function MazeSelection() {
                             <button
                                 onClick={() => setViewMode('2d')}
                                 className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${viewMode === '2d'
-                                        ? 'bg-cyan-500 text-void shadow-lg'
-                                        : 'bg-elevated text-text hover:bg-muted'
+                                    ? 'bg-cyan-500 text-void shadow-lg'
+                                    : 'bg-elevated text-text hover:bg-muted'
                                     }`}
                             >
                                 <span className="text-2xl">🗺️</span>
                                 <span className="font-medium">2D Top-Down</span>
-                                <span className={`text-xs ${viewMode === '2d' ? 'text-void/70' : 'text-subtle'}`}>
-                                    Classic view
+                                <span className={`text-xs text-center ${viewMode === '2d' ? 'text-void/70' : 'text-subtle'}`}>
+                                    Works everywhere ✓
                                 </span>
                             </button>
                             <button
                                 onClick={() => setViewMode('3d')}
                                 className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${viewMode === '3d'
-                                        ? 'bg-cyan-500 text-void shadow-lg'
-                                        : 'bg-elevated text-text hover:bg-muted'
+                                    ? 'bg-cyan-500 text-void shadow-lg'
+                                    : 'bg-elevated text-text hover:bg-muted'
                                     }`}
                             >
                                 <span className="text-2xl">🎮</span>
                                 <span className="font-medium">3D First-Person</span>
-                                <span className={`text-xs ${viewMode === '3d' ? 'text-void/70' : 'text-subtle'}`}>
-                                    Immersive view
+                                <span className={`text-xs text-center ${viewMode === '3d' ? 'text-void/70' : 'text-subtle'}`}>
+                                    Desktop recommended
                                 </span>
                             </button>
                         </div>
@@ -212,7 +212,7 @@ export function MazeSelection() {
                                     {MAZE_CONFIGS[difficulty].description} Maze
                                 </div>
                                 <div className="text-sm text-subtle">
-                                    {viewMode === '3d' ? '🎮 3D' : '🗺️ 2D'} • {controlMode === 'tilt' ? '📱 Tilt' : '👆 Touch'}
+                                    {viewMode === '3d' ? '🎮 3D' : '🗺️ 2D'} • {controlMode === 'tilt' ? '📱 Tilt' : '⌨️ Keyboard'}
                                 </div>
                             </div>
                         </div>
