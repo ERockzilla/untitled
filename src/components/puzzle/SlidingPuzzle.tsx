@@ -60,11 +60,22 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
         setImageLoaded(false);
     }, [cols, rows, imageUrl]);
 
-    // Preload image
+    // Preload image - handle cached images that won't fire onload
     useEffect(() => {
         const img = new Image();
         img.onload = () => setImageLoaded(true);
+        img.onerror = () => {
+            console.error('Failed to load puzzle image:', imageUrl);
+            // Still allow the puzzle to render even if image fails
+            setImageLoaded(true);
+        };
         img.src = imageUrl;
+
+        // If the image is already cached, onload may have fired synchronously
+        // or might not fire at all in some browsers, so check complete status
+        if (img.complete && img.naturalWidth > 0) {
+            setImageLoaded(true);
+        }
     }, [imageUrl]);
 
     // Check completion
