@@ -13,14 +13,12 @@ import {
 } from '../../lib/mazeUtils';
 import { MazeMinimap } from './MazeMinimap';
 import { Joystick } from './Joystick';
-import { createWallTexture, type WallTheme } from './WallTextureGenerator';
 
 interface MazeScene3DProps {
     size: number;
     character: CharacterType;
     controlMode: 'tilt' | 'touch';
     loopFactor?: number;
-    wallTheme?: WallTheme;
     onComplete: (time: number) => void;
     onBack: () => void;
 }
@@ -135,7 +133,7 @@ function Player({
 }
 
 // Maze walls using instanced mesh
-function MazeWalls({ maze, wallTexture }: { maze: MazeGrid; wallTexture: THREE.Texture | null }) {
+function MazeWalls({ maze }: { maze: MazeGrid }) {
     const meshRef = useRef<THREE.InstancedMesh>(null);
 
     const { wallData, count } = useMemo(() => {
@@ -192,14 +190,14 @@ function MazeWalls({ maze, wallTexture }: { maze: MazeGrid; wallTexture: THREE.T
 
     return (
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]} castShadow receiveShadow>
-            <boxGeometry args={[CELL_SIZE, WALL_HEIGHT, 0.2]} />
+            <boxGeometry args={[CELL_SIZE, WALL_HEIGHT, 0.3]} />
             <meshStandardMaterial
-                color="#0891b2"
-                roughness={0.5}
-                metalness={0.2}
-                map={wallTexture}
+                color="#22d3ee"
+                roughness={0.3}
+                metalness={0.1}
                 emissive="#06b6d4"
-                emissiveIntensity={0.1}
+                emissiveIntensity={0.3}
+                side={THREE.DoubleSide}
             />
         </instancedMesh>
     );
@@ -304,7 +302,6 @@ function SceneContent({
     maze,
     startPos,
     goalPos,
-    wallTheme,
     onPositionUpdate,
     onRotationUpdate,
     joystickInput,
@@ -313,22 +310,20 @@ function SceneContent({
     maze: MazeGrid;
     startPos: { x: number; z: number };
     goalPos: [number, number, number];
-    wallTheme: WallTheme;
     onPositionUpdate: (x: number, z: number) => void;
     onRotationUpdate: (rotation: number) => void;
     joystickInput: { x: number; y: number };
     cameraJoystickInput: { x: number; y: number };
 }) {
-    const wallTexture = useMemo(() => createWallTexture(wallTheme, 'maze-walls'), [wallTheme]);
-
     return (
         <>
-            {/* Lighting */}
-            <ambientLight intensity={0.3} />
-            <directionalLight position={[10, 20, 10]} intensity={0.5} castShadow />
+            {/* Lighting - much brighter */}
+            <ambientLight intensity={0.6} />
+            <directionalLight position={[10, 30, 10]} intensity={1} castShadow />
+            <pointLight position={[0, 10, 0]} intensity={0.5} color="#ffffff" />
 
-            {/* Fog */}
-            <fog attach="fog" args={['#0a0a12', 5, 35]} />
+            {/* Fog - less aggressive */}
+            <fog attach="fog" args={['#0a0a12', 8, 50]} />
 
             {/* Floor */}
             <Floor size={maze.rows} />
@@ -354,7 +349,7 @@ function SceneContent({
             </Physics>
 
             {/* Walls (visual only, physics separate) */}
-            <MazeWalls maze={maze} wallTexture={wallTexture} />
+            <MazeWalls maze={maze} />
 
             {/* Goal */}
             <GoalMarker position={goalPos} />
@@ -372,7 +367,6 @@ export function MazeScene3D({
     character,
     // controlMode is not used - we detect mobile via touch capability
     loopFactor = 0.1,
-    wallTheme = 'neon',
     onComplete,
     onBack,
 }: MazeScene3DProps) {
@@ -385,8 +379,18 @@ export function MazeScene3D({
     const [startTime, setStartTime] = useState<number | null>(null);
     const [elapsedTime, setElapsedTime] = useState(0);
 
-    const isMobile = typeof window !== 'undefined' &&
-        ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    // Detect mobile - use touch capability AND screen size
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const checkMobile = () => {
+            const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isSmallScreen = window.innerWidth <= 1024;
+            setIsMobile(hasTouchScreen && isSmallScreen);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Initialize maze
     useEffect(() => {
@@ -504,7 +508,6 @@ export function MazeScene3D({
                             maze={maze}
                             startPos={{ x: startPos.x, z: startPos.y }}
                             goalPos={goalPos}
-                            wallTheme={wallTheme}
                             onPositionUpdate={handlePositionUpdate}
                             onRotationUpdate={handleRotationUpdate}
                             joystickInput={joystickInput}

@@ -40,9 +40,18 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
     const cellSize = baseCellSize * zoom;
     const playerRadius = cellSize * 0.35;
 
-    // Detect if user is on mobile device
-    const isMobile = typeof window !== 'undefined' &&
-        ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    // Detect mobile - use touch capability AND screen size
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const checkMobile = () => {
+            const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isSmallScreen = window.innerWidth <= 1024;
+            setIsMobile(hasTouchScreen && isSmallScreen);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Initialize maze
     useEffect(() => {
@@ -469,9 +478,11 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
 
             {/* Instructions */}
             <div className="text-xs text-subtle text-center">
-                {controlMode === 'tilt'
-                    ? 'Tilt your device to roll through the maze'
-                    : isMobile ? 'Use the D-pad below' : 'Use arrow keys or WASD'}
+                {isMobile
+                    ? (controlMode === 'tilt' && tiltPermission === 'granted'
+                        ? 'Tilt your device or use D-pad below'
+                        : 'Use the D-pad below')
+                    : 'Use arrow keys or WASD'}
             </div>
 
             {/* Maze canvas container with clipping */}
@@ -527,8 +538,8 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
                 </div>
             </div>
 
-            {/* D-pad for touch mode on mobile only - positioned BELOW the maze */}
-            {controlMode === 'touch' && isMobile && (
+            {/* D-pad for mobile - ALWAYS shown on mobile devices */}
+            {isMobile && (
                 <div className="mt-4 flex justify-center">
                     <DPad onDirectionChange={handleDPadDirection} size={140} />
                 </div>
