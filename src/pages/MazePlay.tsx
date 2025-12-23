@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MazeRunner } from '../components/maze/MazeRunner';
+import { MazeRunner3D } from '../components/maze/MazeRunner3D';
 import type { CharacterType, Difficulty } from '../lib/mazeUtils';
 import { saveScore, formatTime, MAZE_CONFIGS, CHARACTERS } from '../lib/mazeUtils';
 
@@ -13,6 +14,7 @@ export function MazePlay() {
     const character = (searchParams.get('character') as CharacterType) || 'ball';
     const controlMode = (searchParams.get('controls') as 'tilt' | 'touch') || 'tilt';
     const difficulty = (searchParams.get('difficulty') as Difficulty) || 'medium';
+    const viewMode = (searchParams.get('view') as '2d' | '3d') || '2d';
 
     const [showVictory, setShowVictory] = useState(false);
     const [completionTime, setCompletionTime] = useState(0);
@@ -35,20 +37,32 @@ export function MazePlay() {
             character,
             controls: controlMode,
             difficulty,
+            view: viewMode,
         });
         navigate(`/maze/play?${params.toString()}&t=${Date.now()}`, { replace: true });
     };
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-void)' }}>
-            <MazeRunner
-                size={size}
-                character={character}
-                controlMode={controlMode}
-                loopFactor={MAZE_CONFIGS[difficulty].loopFactor}
-                onComplete={handleComplete}
-                onBack={handleBack}
-            />
+            {viewMode === '3d' ? (
+                <MazeRunner3D
+                    size={size}
+                    character={character}
+                    controlMode={controlMode}
+                    loopFactor={MAZE_CONFIGS[difficulty].loopFactor}
+                    onComplete={handleComplete}
+                    onBack={handleBack}
+                />
+            ) : (
+                <MazeRunner
+                    size={size}
+                    character={character}
+                    controlMode={controlMode}
+                    loopFactor={MAZE_CONFIGS[difficulty].loopFactor}
+                    onComplete={handleComplete}
+                    onBack={handleBack}
+                />
+            )}
 
             {/* Victory Modal */}
             {showVictory && (
