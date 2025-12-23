@@ -131,8 +131,8 @@ export function Dashboard() {
               <div className="text-sm text-subtle">Libraries</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold" style={{ color: '#f59e0b' }}>1</div>
-              <div className="text-sm text-subtle">Game</div>
+              <div className="text-3xl font-bold" style={{ color: '#f59e0b' }}>2</div>
+              <div className="text-sm text-subtle">Games</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-secondary">∞</div>
@@ -272,6 +272,49 @@ export function Dashboard() {
               <div
                 className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"
                 style={{ backgroundColor: '#f59e0b' }}
+              />
+            </Link>
+
+            {/* Maze Runner Card */}
+            <Link
+              to="/maze"
+              className="group relative overflow-hidden rounded-2xl bg-surface border border-elevated hover:border-muted transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+            >
+              {/* Preview area */}
+              <div
+                className="h-48 flex items-center justify-center overflow-hidden"
+                style={{ backgroundColor: 'color-mix(in srgb, #06b6d4 5%, var(--color-void))' }}
+              >
+                <div className="text-7xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+                  🌀
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: '#06b6d4' }}
+                  />
+                  <h3 className="text-lg font-semibold text-text">Maze Runner</h3>
+                </div>
+                <p className="text-sm text-subtle">
+                  Navigate procedural mazes with tilt controls or touch
+                </p>
+                <div className="mt-4 pt-4 border-t border-elevated">
+                  <div className="flex gap-3 text-xs text-subtle">
+                    <span className="px-2 py-1 bg-elevated rounded">📱 Tilt</span>
+                    <span className="px-2 py-1 bg-elevated rounded">👆 Touch</span>
+                    <span className="px-2 py-1 bg-elevated rounded">6 Characters</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hover accent */}
+              <div
+                className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"
+                style={{ backgroundColor: '#06b6d4' }}
               />
             </Link>
           </div>

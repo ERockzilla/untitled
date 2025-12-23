@@ -8,6 +8,8 @@ import { TilePatterns } from './pages/TilePatterns';
 import { LEDMatrix } from './pages/LEDMatrix';
 import { PuzzleSelection } from './pages/PuzzleSelection';
 import { PuzzlePlay } from './pages/PuzzlePlay';
+import { MazeSelection } from './pages/MazeSelection';
+import { MazePlay } from './pages/MazePlay';
 import { MathNatureBackground } from './components/background/MathNatureBackground';
 
 // Check if we're on the DRock VIP subdomain
@@ -47,6 +49,8 @@ function App() {
         <Route path="/led" element={<LEDMatrix />} />
         <Route path="/puzzle" element={<PuzzleSelection />} />
         <Route path="/puzzle/play" element={<PuzzlePlay />} />
+        <Route path="/maze" element={<MazeSelection />} />
+        <Route path="/maze/play" element={<MazePlay />} />
       </Routes>
     </>
   );
