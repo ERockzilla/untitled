@@ -311,6 +311,36 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
         handleMove(touch.clientX, touch.clientY);
     }, [handleMove, draggedPiece, selectedPiece, pieces, isRotating]);
 
+    // Helper to find nearest available spot on board
+    const findNearestAvailableSpot = useCallback((targetRow: number, targetCol: number, excludePieceId: number): { row: number; col: number } | null => {
+        // Check spots in expanding rings around target
+        for (let distance = 0; distance <= Math.max(rows, cols); distance++) {
+            for (let dr = -distance; dr <= distance; dr++) {
+                for (let dc = -distance; dc <= distance; dc++) {
+                    // Only check spots at this distance (the ring)
+                    if (Math.abs(dr) !== distance && Math.abs(dc) !== distance) continue;
+
+                    const r = targetRow + dr;
+                    const c = targetCol + dc;
+
+                    // Check bounds
+                    if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+
+                    // Check if spot is available (no locked piece there)
+                    const pieceAtSpot = pieces.find(
+                        p => p.id !== excludePieceId && p.isPlaced && p.currentRow === r && p.currentCol === c
+                    );
+
+                    // Spot is available if empty or has an unlocked piece (which will be swapped)
+                    if (!pieceAtSpot || !pieceAtSpot.isLocked) {
+                        return { row: r, col: c };
+                    }
+                }
+            }
+        }
+        return null; // No available spot (shouldn't happen in practice)
+    }, [pieces, rows, cols]);
+
     // Unified drop handler
     const handleDrop = useCallback((clientX: number, clientY: number) => {
         if (draggedPiece === null || !containerRef.current) return;
@@ -341,38 +371,52 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
             const clampedCol = Math.max(0, Math.min(cols - 1, targetCol));
             const clampedRow = Math.max(0, Math.min(rows - 1, targetRow));
 
-            // Check if this is the correct position (correct location + correct rotation)
-            const isCorrect =
-                clampedRow === piece.correctRow &&
-                clampedCol === piece.correctCol &&
-                piece.rotation === 0;
-
-            // Check if spot is taken by another piece
+            // Check if spot is taken by a locked piece
             const existingPiece = pieces.find(
                 p => p.id !== piece.id && p.isPlaced && p.currentRow === clampedRow && p.currentCol === clampedCol
             );
 
-            // If spot has a LOCKED piece, can't place here
+            let finalRow = clampedRow;
+            let finalCol = clampedCol;
+            let pieceToSwap = existingPiece;
+
+            // If spot has a LOCKED piece, find nearest available spot
             if (existingPiece?.isLocked) {
-                // Reject - can't place on a locked piece
-                setDraggedPiece(null);
-                return;
+                const nearestSpot = findNearestAvailableSpot(clampedRow, clampedCol, piece.id);
+                if (nearestSpot) {
+                    finalRow = nearestSpot.row;
+                    finalCol = nearestSpot.col;
+                    // Check if this new spot has an unlocked piece to swap
+                    pieceToSwap = pieces.find(
+                        p => p.id !== piece.id && p.isPlaced && p.currentRow === finalRow && p.currentCol === finalCol
+                    );
+                } else {
+                    // No available spot found, don't change anything
+                    setDraggedPiece(null);
+                    return;
+                }
             }
+
+            // Check if this is the correct position (correct location + correct rotation)
+            const isCorrect =
+                finalRow === piece.correctRow &&
+                finalCol === piece.correctCol &&
+                piece.rotation === 0;
 
             // Place the piece (swap if there's an unlocked piece there)
             const newPieces = pieces.map(p => {
                 if (p.id === draggedPiece) {
-                    // Place the dragged piece
+                    // Place the dragged piece at final position
                     return {
                         ...p,
                         isPlaced: true,
                         isLocked: isCorrect,
-                        currentRow: clampedRow,
-                        currentCol: clampedCol,
+                        currentRow: finalRow,
+                        currentCol: finalCol,
                     };
                 }
-                if (existingPiece && p.id === existingPiece.id) {
-                    // Send the existing unlocked piece back to tray (swap positions)
+                if (pieceToSwap && !pieceToSwap.isLocked && p.id === pieceToSwap.id) {
+                    // Send the existing unlocked piece back to tray (swap)
                     return {
                         ...p,
                         isPlaced: false,
@@ -394,7 +438,7 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
         }
 
         setDraggedPiece(null);
-    }, [draggedPiece, pieces, boardWidth, boardHeight, displayPieceWidth, displayPieceHeight, cols, rows, tabOverflow]);
+    }, [draggedPiece, pieces, boardWidth, boardHeight, displayPieceWidth, displayPieceHeight, cols, rows, tabOverflow, findNearestAvailableSpot]);
 
     const handleMouseUp = useCallback((e: React.MouseEvent) => {
         handleDrop(e.clientX, e.clientY);
