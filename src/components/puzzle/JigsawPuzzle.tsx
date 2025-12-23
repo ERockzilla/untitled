@@ -100,7 +100,10 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
     const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
     const [imageLoaded, setImageLoaded] = useState(false);
     const [containerWidth, setContainerWidth] = useState(480);
+    const [isRotating, setIsRotating] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const initialRotationAngle = useRef<number>(0);
+    const lastRotationSnap = useRef<number>(0);
 
     const { cols, rows, pieceWidth, pieceHeight, imageWidth, imageHeight } = config;
 
@@ -263,11 +266,50 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
     }, [handleMove]);
 
     const handleTouchMove = useCallback((e: React.TouchEvent) => {
+        // Two-finger rotation gesture
+        if (e.touches.length === 2 && selectedPiece !== null) {
+            e.preventDefault();
+
+            const piece = pieces.find(p => p.id === selectedPiece);
+            if (!piece || piece.isLocked) return;
+
+            // Calculate angle between two touch points
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const currentAngle = Math.atan2(
+                touch2.clientY - touch1.clientY,
+                touch2.clientX - touch1.clientX
+            ) * (180 / Math.PI);
+
+            if (!isRotating) {
+                // Start rotation gesture
+                setIsRotating(true);
+                initialRotationAngle.current = currentAngle;
+                lastRotationSnap.current = piece.rotation;
+            } else {
+                // Calculate rotation delta and snap to 90 degree increments
+                const angleDelta = currentAngle - initialRotationAngle.current;
+                const snappedRotation = Math.round(angleDelta / 90) * 90;
+                const newRotation = (lastRotationSnap.current + snappedRotation + 360) % 360;
+
+                if (newRotation !== piece.rotation) {
+                    const pieceIdx = pieces.findIndex(p => p.id === selectedPiece);
+                    if (pieceIdx !== -1) {
+                        const newPieces = [...pieces];
+                        newPieces[pieceIdx] = { ...newPieces[pieceIdx], rotation: newRotation };
+                        setPieces(newPieces);
+                    }
+                }
+            }
+            return;
+        }
+
+        // Single-finger drag
         if (e.touches.length !== 1 || draggedPiece === null) return;
         e.preventDefault(); // Prevent scrolling while dragging
         const touch = e.touches[0];
         handleMove(touch.clientX, touch.clientY);
-    }, [handleMove, draggedPiece]);
+    }, [handleMove, draggedPiece, selectedPiece, pieces, isRotating]);
 
     // Unified drop handler
     const handleDrop = useCallback((clientX: number, clientY: number) => {
@@ -359,10 +401,17 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
     }, [handleDrop]);
 
     const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-        if (e.changedTouches.length !== 1) return;
-        const touch = e.changedTouches[0];
-        handleDrop(touch.clientX, touch.clientY);
-    }, [handleDrop]);
+        // Reset rotation state when touch ends
+        if (isRotating) {
+            setIsRotating(false);
+        }
+
+        // Only handle drop if we have exactly one changed touch and were dragging
+        if (e.changedTouches.length === 1 && draggedPiece !== null) {
+            const touch = e.changedTouches[0];
+            handleDrop(touch.clientX, touch.clientY);
+        }
+    }, [handleDrop, isRotating, draggedPiece]);
 
     const unplacedPieces = pieces.filter(p => !p.isPlaced);
     const placedPieces = pieces.filter(p => p.isPlaced);
@@ -465,39 +514,12 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
             onTouchEnd={handleTouchEnd}
             onTouchCancel={() => setDraggedPiece(null)}
         >
-            {/* Instructions & Rotation Controls */}
-            <div className="flex items-center justify-center gap-2 flex-wrap">
+            {/* Instructions */}
+            <div className="flex items-center justify-center gap-2 flex-wrap text-center px-2">
                 <span className="text-xs text-subtle">
-                    Drag to place • <span className="text-red-400">Red</span> = no good • <span className="text-yellow-400">Yellow</span> = orientation good
+                    Tap to select • <span className="text-cyan-400">2-finger twist to rotate</span> • <span className="text-red-400">Red</span>=wrong <span className="text-yellow-400">Yellow</span>=rotate more
                 </span>
             </div>
-
-            {/* Rotation buttons for mobile */}
-            {selectedPiece !== null && (
-                <div className="flex items-center justify-center gap-3">
-                    <button
-                        onClick={() => rotateSelected(-1)}
-                        className="p-2 rounded-lg bg-elevated hover:bg-muted active:bg-cyan-500/20 transition-colors"
-                        title="Rotate Left"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                        </svg>
-                    </button>
-                    <span className="text-sm text-cyan-400 font-mono min-w-[60px] text-center">
-                        {pieces.find(p => p.id === selectedPiece)?.rotation}°
-                    </span>
-                    <button
-                        onClick={() => rotateSelected(1)}
-                        className="p-2 rounded-lg bg-elevated hover:bg-muted active:bg-cyan-500/20 transition-colors"
-                        title="Rotate Right"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
-                        </svg>
-                    </button>
-                </div>
-            )}
 
             {/* Puzzle Board */}
             <div
@@ -642,10 +664,48 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                 </div>
             )}
 
-            {/* Progress */}
-            <div className="text-center text-sm text-subtle">
-                {pieces.filter(p => p.isLocked).length} / {pieces.length} pieces locked
-            </div>
+            {/* Floating Rotation Controls - overlaid on board corners */}
+            {selectedPiece !== null && !pieces.find(p => p.id === selectedPiece)?.isLocked && (
+                <>
+                    {/* Left rotate button - bottom left */}
+                    <div className="fixed bottom-20 left-4 z-40">
+                        <button
+                            onClick={() => rotateSelected(-1)}
+                            className="w-14 h-14 rounded-full bg-cyan-500/90 hover:bg-cyan-400 active:scale-95 transition-all shadow-lg flex items-center justify-center text-void"
+                            title="Rotate Left"
+                        >
+                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Right rotate button - bottom right */}
+                    <div className="fixed bottom-20 right-4 z-40">
+                        <button
+                            onClick={() => rotateSelected(1)}
+                            className="w-14 h-14 rounded-full bg-cyan-500/90 hover:bg-cyan-400 active:scale-95 transition-all shadow-lg flex items-center justify-center text-void"
+                            title="Rotate Right"
+                        >
+                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Rotation indicator - floating center bottom */}
+                    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
+                        <div className="px-4 py-2 rounded-full bg-elevated/95 backdrop-blur-sm shadow-lg border border-cyan-500/30 flex items-center gap-2">
+                            <span className="text-xl font-bold text-cyan-400 font-mono">
+                                {pieces.find(p => p.id === selectedPiece)?.rotation}°
+                            </span>
+                            <span className="text-xs text-subtle">
+                                {pieces.find(p => p.id === selectedPiece)?.rotation === 0 ? '✓ ready' : '↻ rotate'}
+                            </span>
+                        </div>
+                    </div>
+                </>
+            )}
 
             <style>{`
         @keyframes shake {

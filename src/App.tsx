@@ -6,7 +6,8 @@ import { VoxelSpace } from './pages/VoxelSpace';
 import { ParametricCurves } from './pages/ParametricCurves';
 import { TilePatterns } from './pages/TilePatterns';
 import { LEDMatrix } from './pages/LEDMatrix';
-import { PuzzleGame } from './pages/PuzzleGame';
+import { PuzzleSelection } from './pages/PuzzleSelection';
+import { PuzzlePlay } from './pages/PuzzlePlay';
 import { MathNatureBackground } from './components/background/MathNatureBackground';
 
 // Check if we're on the DRock VIP subdomain
@@ -44,7 +45,8 @@ function App() {
         <Route path="/curves" element={<ParametricCurves />} />
         <Route path="/tiles" element={<TilePatterns />} />
         <Route path="/led" element={<LEDMatrix />} />
-        <Route path="/puzzle" element={<PuzzleGame />} />
+        <Route path="/puzzle" element={<PuzzleSelection />} />
+        <Route path="/puzzle/play" element={<PuzzlePlay />} />
       </Routes>
     </>
   );
