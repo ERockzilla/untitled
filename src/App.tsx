@@ -10,6 +10,7 @@ import { PuzzleSelection } from './pages/PuzzleSelection';
 import { PuzzlePlay } from './pages/PuzzlePlay';
 import { MazeSelection } from './pages/MazeSelection';
 import { MazePlay } from './pages/MazePlay';
+import { TiltCalibration } from './pages/TiltCalibration';
 import { MathNatureBackground } from './components/background/MathNatureBackground';
 
 // Check if we're on the DRock VIP subdomain
@@ -50,6 +51,7 @@ function App() {
         <Route path="/puzzle" element={<PuzzleSelection />} />
         <Route path="/puzzle/play" element={<PuzzlePlay />} />
         <Route path="/maze" element={<MazeSelection />} />
+        <Route path="/maze/calibrate" element={<TiltCalibration />} />
         <Route path="/maze/play" element={<MazePlay />} />
       </Routes>
     </>

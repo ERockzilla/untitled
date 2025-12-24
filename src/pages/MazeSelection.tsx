@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../lib/ThemeContext';
 import type { Difficulty, CharacterType } from '../lib/mazeUtils';
@@ -7,21 +7,100 @@ import { MAZE_CONFIGS, CHARACTERS, getBestTime, formatTime } from '../lib/mazeUt
 export function MazeSelection() {
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
-    const [difficulty, setDifficulty] = useState<Difficulty>('medium');
     const [character, setCharacter] = useState<CharacterType>('ball');
+
+    // Mobile detection
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const checkMobile = () => {
+            const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isSmallScreen = window.innerWidth <= 1024;
+            setIsMobile(hasTouchScreen && isSmallScreen);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // On mobile: force easy (10x10) and tilt-only, 2D-only
+    const [difficulty, setDifficulty] = useState<Difficulty>('easy');
     const [controlMode, setControlMode] = useState<'tilt' | 'touch'>('tilt');
     const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
 
+    // Tilt permission state (for mobile)
+    const [tiltPermission, setTiltPermission] = useState<'checking' | 'prompt' | 'granted' | 'denied'>('checking');
+
+    // Check tilt permission status on mount
+    useEffect(() => {
+        if (!isMobile) {
+            setTiltPermission('granted'); // Desktop doesn't need permission
+            return;
+        }
+
+        // Check if DeviceOrientationEvent exists
+        if (typeof DeviceOrientationEvent === 'undefined') {
+            setTiltPermission('denied');
+            return;
+        }
+
+        // Check if permission API exists (iOS 13+)
+        if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+            setTiltPermission('prompt');
+        } else {
+            // Android/older iOS - permission not required
+            setTiltPermission('granted');
+        }
+    }, [isMobile]);
+
+    // Request tilt permission
+    const requestTiltPermission = useCallback(async () => {
+        if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+            try {
+                const result = await (DeviceOrientationEvent as any).requestPermission();
+                setTiltPermission(result === 'granted' ? 'granted' : 'denied');
+            } catch {
+                setTiltPermission('denied');
+            }
+        } else {
+            setTiltPermission('granted');
+        }
+    }, []);
+
+    // Reset to mobile-compatible defaults when mobile detection changes
+    useEffect(() => {
+        if (isMobile) {
+            setDifficulty('easy');
+            setControlMode('tilt');
+            setViewMode('2d');
+        }
+    }, [isMobile]);
+
     const handleStart = () => {
-        const params = new URLSearchParams({
-            size: MAZE_CONFIGS[difficulty].size.toString(),
-            character,
-            controls: controlMode,
-            difficulty,
-            view: viewMode,
-        });
-        navigate(`/maze/play?${params.toString()}`);
+        const mazeSize = isMobile ? 10 : MAZE_CONFIGS[difficulty].size;
+        const effectiveDifficulty = isMobile ? 'easy' : difficulty;
+
+        // On mobile with tilt controls, go through calibration first
+        if (isMobile && controlMode === 'tilt') {
+            const params = new URLSearchParams({
+                size: mazeSize.toString(),
+                character,
+                difficulty: effectiveDifficulty,
+            });
+            navigate(`/maze/calibrate?${params.toString()}`);
+        } else {
+            const params = new URLSearchParams({
+                size: mazeSize.toString(),
+                character,
+                controls: controlMode,
+                difficulty: effectiveDifficulty,
+                view: viewMode,
+            });
+            navigate(`/maze/play?${params.toString()}`);
+        }
     };
+
+    // Check if we can start (on mobile, need tilt permission)
+    const canStart = !isMobile || tiltPermission === 'granted';
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-void)' }}>
@@ -68,33 +147,46 @@ export function MazeSelection() {
                             <span className="w-6 h-6 rounded-full bg-cyan-500 text-void text-xs flex items-center justify-center font-bold">1</span>
                             Choose Difficulty
                         </h2>
-                        <div className="grid grid-cols-4 gap-2">
-                            {(Object.keys(MAZE_CONFIGS) as Difficulty[]).map(d => {
-                                const config = MAZE_CONFIGS[d];
-                                const bestTime = getBestTime(d);
-                                const isSelected = difficulty === d;
 
-                                return (
-                                    <button
-                                        key={d}
-                                        onClick={() => setDifficulty(d)}
-                                        className={`p-3 rounded-xl text-center transition-all duration-200 ${isSelected
-                                            ? 'bg-cyan-500 text-void shadow-lg scale-105'
-                                            : 'bg-elevated text-text hover:bg-muted'
-                                            }`}
-                                    >
-                                        <div className="text-sm font-medium">{config.label}</div>
-                                        <div className={`text-xs mt-1 ${isSelected ? 'text-void/70' : 'text-subtle'}`}>
-                                            {config.description}
-                                        </div>
-                                        {bestTime && (
-                                            <div className={`text-xs mt-1 ${isSelected ? 'text-void/60' : 'text-cyan-400'}`}>
-                                                🏆 {formatTime(bestTime)}
+                        {/* Mobile notice */}
+                        {isMobile && (
+                            <div className="mb-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm">
+                                <p className="font-medium">📱 Mobile Mode</p>
+                                <p className="text-xs mt-1 text-amber-400/80">
+                                    10×10 maze optimized for mobile tilt controls. More sizes coming soon!
+                                </p>
+                            </div>
+                        )}
+
+                        <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-4'}`}>
+                            {(Object.keys(MAZE_CONFIGS) as Difficulty[])
+                                .filter(d => !isMobile || d === 'easy') // Only show Easy on mobile
+                                .map(d => {
+                                    const config = MAZE_CONFIGS[d];
+                                    const bestTime = getBestTime(d);
+                                    const isSelected = difficulty === d;
+
+                                    return (
+                                        <button
+                                            key={d}
+                                            onClick={() => setDifficulty(d)}
+                                            className={`p-3 rounded-xl text-center transition-all duration-200 ${isSelected
+                                                ? 'bg-cyan-500 text-void shadow-lg scale-105'
+                                                : 'bg-elevated text-text hover:bg-muted'
+                                                }`}
+                                        >
+                                            <div className="text-sm font-medium">{config.label}</div>
+                                            <div className={`text-xs mt-1 ${isSelected ? 'text-void/70' : 'text-subtle'}`}>
+                                                {config.description}
                                             </div>
-                                        )}
-                                    </button>
-                                );
-                            })}
+                                            {bestTime && (
+                                                <div className={`text-xs mt-1 ${isSelected ? 'text-void/60' : 'text-cyan-400'}`}>
+                                                    🏆 {formatTime(bestTime)}
+                                                </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                         </div>
                     </section>
 
@@ -129,77 +221,132 @@ export function MazeSelection() {
                         </p>
                     </section>
 
-                    {/* Step 3: Controls */}
+                    {/* Step 3: Controls - On mobile, tilt-only with calibration note */}
                     <section>
                         <h2 className="text-sm font-semibold text-subtle mb-3 flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-cyan-500 text-void text-xs flex items-center justify-center font-bold">3</span>
-                            Choose Controls
+                            <span className="w-6 h-6 rounded-full bg-cyan-500 text-void text-xs flex items-center justify-center font-bold">{isMobile ? '2' : '3'}</span>
+                            {isMobile ? 'Control Mode' : 'Choose Controls'}
                         </h2>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => setControlMode('tilt')}
-                                className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${controlMode === 'tilt'
-                                    ? 'bg-cyan-500 text-void shadow-lg'
-                                    : 'bg-elevated text-text hover:bg-muted'
-                                    }`}
-                            >
-                                <span className="text-2xl">📱</span>
-                                <span className="font-medium">Tilt</span>
-                                <span className={`text-xs text-center ${controlMode === 'tilt' ? 'text-void/70' : 'text-subtle'}`}>
-                                    Mobile only
-                                </span>
-                            </button>
-                            <button
-                                onClick={() => setControlMode('touch')}
-                                className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${controlMode === 'touch'
-                                    ? 'bg-cyan-500 text-void shadow-lg'
-                                    : 'bg-elevated text-text hover:bg-muted'
-                                    }`}
-                            >
-                                <span className="text-2xl">⌨️</span>
-                                <span className="font-medium">Keyboard</span>
-                                <span className={`text-xs text-center ${controlMode === 'touch' ? 'text-void/70' : 'text-subtle'}`}>
-                                    Arrow keys / WASD
-                                </span>
-                            </button>
-                        </div>
+
+                        {isMobile ? (
+                            // Mobile: Tilt only with permission request + calibration info
+                            <div className="space-y-3">
+                                {/* Tilt control info */}
+                                <div className="p-4 rounded-xl bg-cyan-500 text-void shadow-lg">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-3xl">📱</span>
+                                        <div>
+                                            <div className="font-bold">Tilt Controls</div>
+                                            <div className="text-xs text-void/70">
+                                                Calibration screen will help tune your motion sensitivity
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Permission request */}
+                                {tiltPermission === 'checking' && (
+                                    <div className="p-3 rounded-lg bg-elevated text-subtle text-center text-sm animate-pulse">
+                                        Checking motion sensor access...
+                                    </div>
+                                )}
+
+                                {tiltPermission === 'prompt' && (
+                                    <button
+                                        onClick={requestTiltPermission}
+                                        className="w-full p-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-void font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <span className="text-xl">🎯</span>
+                                        Enable Motion Access
+                                    </button>
+                                )}
+
+                                {tiltPermission === 'granted' && (
+                                    <div className="p-3 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-center text-sm flex items-center justify-center gap-2">
+                                        <span>✓</span>
+                                        Motion access granted - Ready to play!
+                                    </div>
+                                )}
+
+                                {tiltPermission === 'denied' && (
+                                    <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-center text-sm">
+                                        <p className="font-medium">Motion access denied</p>
+                                        <p className="text-xs mt-1">
+                                            Please enable motion in browser settings and reload.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            // Desktop: Full control options
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => setControlMode('tilt')}
+                                    className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${controlMode === 'tilt'
+                                        ? 'bg-cyan-500 text-void shadow-lg'
+                                        : 'bg-elevated text-text hover:bg-muted'
+                                        }`}
+                                >
+                                    <span className="text-2xl">📱</span>
+                                    <span className="font-medium">Tilt</span>
+                                    <span className={`text-xs text-center ${controlMode === 'tilt' ? 'text-void/70' : 'text-subtle'}`}>
+                                        Mobile only
+                                    </span>
+                                </button>
+                                <button
+                                    onClick={() => setControlMode('touch')}
+                                    className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${controlMode === 'touch'
+                                        ? 'bg-cyan-500 text-void shadow-lg'
+                                        : 'bg-elevated text-text hover:bg-muted'
+                                        }`}
+                                >
+                                    <span className="text-2xl">⌨️</span>
+                                    <span className="font-medium">Keyboard</span>
+                                    <span className={`text-xs text-center ${controlMode === 'touch' ? 'text-void/70' : 'text-subtle'}`}>
+                                        Arrow keys / WASD
+                                    </span>
+                                </button>
+                            </div>
+                        )}
                     </section>
 
-                    {/* Step 4: View Mode */}
-                    <section>
-                        <h2 className="text-sm font-semibold text-subtle mb-3 flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-cyan-500 text-void text-xs flex items-center justify-center font-bold">4</span>
-                            Choose View
-                        </h2>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => setViewMode('2d')}
-                                className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${viewMode === '2d'
-                                    ? 'bg-cyan-500 text-void shadow-lg'
-                                    : 'bg-elevated text-text hover:bg-muted'
-                                    }`}
-                            >
-                                <span className="text-2xl">🗺️</span>
-                                <span className="font-medium">2D Top-Down</span>
-                                <span className={`text-xs text-center ${viewMode === '2d' ? 'text-void/70' : 'text-subtle'}`}>
-                                    Works everywhere ✓
-                                </span>
-                            </button>
-                            <button
-                                onClick={() => setViewMode('3d')}
-                                className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${viewMode === '3d'
-                                    ? 'bg-cyan-500 text-void shadow-lg'
-                                    : 'bg-elevated text-text hover:bg-muted'
-                                    }`}
-                            >
-                                <span className="text-2xl">🎮</span>
-                                <span className="font-medium">3D First-Person</span>
-                                <span className={`text-xs text-center ${viewMode === '3d' ? 'text-void/70' : 'text-subtle'}`}>
-                                    Desktop recommended
-                                </span>
-                            </button>
-                        </div>
-                    </section>
+                    {/* Step 4: View Mode - Hidden on mobile (forced 2D) */}
+                    {!isMobile && (
+                        <section>
+                            <h2 className="text-sm font-semibold text-subtle mb-3 flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-full bg-cyan-500 text-void text-xs flex items-center justify-center font-bold">4</span>
+                                Choose View
+                            </h2>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => setViewMode('2d')}
+                                    className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${viewMode === '2d'
+                                        ? 'bg-cyan-500 text-void shadow-lg'
+                                        : 'bg-elevated text-text hover:bg-muted'
+                                        }`}
+                                >
+                                    <span className="text-2xl">🗺️</span>
+                                    <span className="font-medium">2D Top-Down</span>
+                                    <span className={`text-xs text-center ${viewMode === '2d' ? 'text-void/70' : 'text-subtle'}`}>
+                                        Works everywhere ✓
+                                    </span>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('3d')}
+                                    className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center gap-2 ${viewMode === '3d'
+                                        ? 'bg-cyan-500 text-void shadow-lg'
+                                        : 'bg-elevated text-text hover:bg-muted'
+                                        }`}
+                                >
+                                    <span className="text-2xl">🎮</span>
+                                    <span className="font-medium">3D First-Person</span>
+                                    <span className={`text-xs text-center ${viewMode === '3d' ? 'text-void/70' : 'text-subtle'}`}>
+                                        Desktop recommended
+                                    </span>
+                                </button>
+                            </div>
+                        </section>
+                    )}
 
                     {/* Preview */}
                     <section className="p-4 rounded-xl bg-elevated/50 border border-elevated">
@@ -225,9 +372,13 @@ export function MazeSelection() {
                 <div className="max-w-lg mx-auto">
                     <button
                         onClick={handleStart}
-                        className="w-full py-4 rounded-xl font-bold text-lg bg-gradient-to-r from-cyan-500 to-cyan-400 text-void shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                        disabled={!canStart}
+                        className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 ${canStart
+                                ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-void shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]'
+                                : 'bg-elevated text-subtle cursor-not-allowed'
+                            }`}
                     >
-                        🌀 Enter the Maze
+                        {canStart ? '🌀 Enter the Maze' : '📱 Enable Motion Access First'}
                     </button>
                 </div>
             </div>

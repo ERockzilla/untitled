@@ -131,22 +131,40 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
         return () => clearInterval(interval);
     }, [isPlaying, startTime]);
 
-    // Request tilt permission (iOS 13+)
-    const requestTiltPermission = useCallback(async () => {
-        if (typeof DeviceOrientationEvent !== 'undefined' &&
-            typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-            try {
-                const permission = await (DeviceOrientationEvent as any).requestPermission();
-                setTiltPermission(permission);
-            } catch {
-                setTiltPermission('denied');
+    // Load calibration data from localStorage
+    interface CalibrationData {
+        neutralBeta: number;
+        neutralGamma: number;
+        sensitivity: number;
+        deadzone: number;
+        timestamp: number;
+    }
+
+    const [calibration, setCalibration] = useState<CalibrationData | null>(null);
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('maze_tilt_calibration');
+            if (saved) {
+                const data = JSON.parse(saved);
+                // Check if calibration is less than 24 hours old
+                if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+                    setCalibration(data);
+                }
             }
-        } else {
-            setTiltPermission('granted');
+        } catch {
+            // Ignore parse errors
         }
     }, []);
 
-    // Tilt controls - reduced sensitivity to prevent wall clipping
+    // Auto-grant tilt permission since it's now handled in MazeSelection
+    useEffect(() => {
+        if (controlMode === 'tilt') {
+            // Permission was already requested in MazeSelection, so just enable
+            setTiltPermission('granted');
+        }
+    }, [controlMode]);
+
+    // Tilt controls - uses calibration data for better accuracy
     useEffect(() => {
         if (controlMode !== 'tilt' || tiltPermission !== 'granted') return;
 
@@ -156,19 +174,38 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
             const gamma = e.gamma || 0;
             const beta = e.beta || 0;
 
-            // Reduced sensitivity for better collision handling
-            const sensitivity = 0.025;
-            const maxVel = 3; // Lower max velocity
+            // Use calibration data if available, otherwise use defaults
+            const neutralBeta = calibration?.neutralBeta ?? 45;
+            const neutralGamma = calibration?.neutralGamma ?? 0;
+            const sensitivityMultiplier = calibration?.sensitivity ?? 1.0;
+            const deadzone = calibration?.deadzone ?? 5;
+
+            // Adjust for neutral position
+            const adjustedBeta = beta - neutralBeta;
+            const adjustedGamma = gamma - neutralGamma;
+
+            // Apply deadzone - no movement if within deadzone
+            const effectiveBeta = Math.abs(adjustedBeta) > deadzone
+                ? (adjustedBeta - Math.sign(adjustedBeta) * deadzone)
+                : 0;
+            const effectiveGamma = Math.abs(adjustedGamma) > deadzone
+                ? (adjustedGamma - Math.sign(adjustedGamma) * deadzone)
+                : 0;
+
+            // Base sensitivity, adjusted by calibration
+            const baseSensitivity = 0.025;
+            const sensitivity = baseSensitivity * sensitivityMultiplier;
+            const maxVel = 3; // Max velocity to prevent wall clipping
 
             setVelocity(v => ({
-                x: Math.max(-maxVel, Math.min(maxVel, v.x * 0.85 + gamma * sensitivity)),
-                y: Math.max(-maxVel, Math.min(maxVel, v.y * 0.85 + (beta - 45) * sensitivity)),
+                x: Math.max(-maxVel, Math.min(maxVel, v.x * 0.85 + effectiveGamma * sensitivity)),
+                y: Math.max(-maxVel, Math.min(maxVel, v.y * 0.85 + effectiveBeta * sensitivity)),
             }));
         };
 
         window.addEventListener('deviceorientation', handleOrientation);
         return () => window.removeEventListener('deviceorientation', handleOrientation);
-    }, [controlMode, tiltPermission, isPlaying]);
+    }, [controlMode, tiltPermission, isPlaying, calibration]);
 
     // D-pad direction handler for touch mode
     const handleDPadDirection = useCallback((dir: { x: number; y: number }) => {
@@ -441,112 +478,106 @@ export function MazeRunner({ size, character, controlMode, loopFactor = 0.1, onC
     };
 
     return (
-        <div ref={containerRef} className="flex flex-col items-center gap-4 h-full p-4">
-            {/* Controls header */}
-            <div className="flex items-center justify-between w-full max-w-md">
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-elevated hover:bg-muted transition-colors text-text"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                    <span className="text-sm">Back</span>
-                </button>
+        <div ref={containerRef} className="flex flex-col items-center h-screen overflow-hidden" style={{ backgroundColor: 'var(--color-void)' }}>
+            {/* Controls header - sticky at top */}
+            <div className="flex-shrink-0 w-full p-4 pb-2">
+                <div className="flex items-center justify-between max-w-md mx-auto">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-elevated hover:bg-muted transition-colors text-text"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        <span className="text-sm">Back</span>
+                    </button>
 
-                <div className="text-lg font-mono font-bold text-cyan-400">
-                    {formatTimeDisplay(elapsedTime)}
+                    <div className="text-lg font-mono font-bold text-cyan-400">
+                        {formatTimeDisplay(elapsedTime)}
+                    </div>
+
+                    <button
+                        onClick={handleReset}
+                        className="px-3 py-2 rounded-lg bg-elevated hover:bg-muted transition-colors text-sm text-text"
+                    >
+                        ↻ Reset
+                    </button>
                 </div>
-
-                <button
-                    onClick={handleReset}
-                    className="px-3 py-2 rounded-lg bg-elevated hover:bg-muted transition-colors text-sm text-text"
-                >
-                    ↻ Reset
-                </button>
             </div>
 
-            {/* Permission request for tilt */}
-            {controlMode === 'tilt' && tiltPermission === 'prompt' && (
-                <button
-                    onClick={requestTiltPermission}
-                    className="px-4 py-2 rounded-lg bg-cyan-500 text-void font-medium hover:bg-cyan-400 transition-colors"
-                >
-                    📱 Enable Tilt Controls
-                </button>
-            )}
-
             {/* Instructions */}
-            <div className="text-xs text-subtle text-center">
+            <div className="flex-shrink-0 text-xs text-subtle text-center pb-2">
                 {isMobile
-                    ? (controlMode === 'tilt' && tiltPermission === 'granted'
+                    ? (controlMode === 'tilt'
                         ? 'Tilt your device or use D-pad below'
                         : 'Use the D-pad below')
                     : 'Use arrow keys or WASD'}
             </div>
 
-            {/* Maze canvas container with clipping */}
-            <div
-                className="relative overflow-hidden rounded-lg shadow-lg"
-                style={{
-                    width: viewportSize,
-                    height: viewportSize,
-                    boxShadow: theme === 'dark'
-                        ? '0 4px 24px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(6,182,212,0.2)'
-                        : '0 4px 16px rgba(0,0,0,0.15)',
-                }}
-                onWheel={handleWheel}
-            >
-                <canvas
-                    ref={canvasRef}
-                    width={size * cellSize}
-                    height={size * cellSize}
-                    className="touch-none"
+            {/* Maze canvas container - takes remaining space */}
+            <div className="flex-1 flex flex-col items-center justify-center overflow-hidden px-4">
+                <div
+                    className="relative overflow-hidden rounded-lg shadow-lg"
                     style={{
-                        position: 'absolute',
-                        left: -cameraOffset.x,
-                        top: -cameraOffset.y,
-                        width: size * cellSize,
-                        height: size * cellSize,
+                        width: viewportSize,
+                        height: viewportSize,
+                        boxShadow: theme === 'dark'
+                            ? '0 4px 24px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(6,182,212,0.2)'
+                            : '0 4px 16px rgba(0,0,0,0.15)',
                     }}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
-                />
+                    onWheel={handleWheel}
+                >
+                    <canvas
+                        ref={canvasRef}
+                        width={size * cellSize}
+                        height={size * cellSize}
+                        className="touch-none"
+                        style={{
+                            position: 'absolute',
+                            left: -cameraOffset.x,
+                            top: -cameraOffset.y,
+                            width: size * cellSize,
+                            height: size * cellSize,
+                        }}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                    />
 
-                {/* Zoom controls */}
-                <div className="absolute top-2 right-2 flex flex-col gap-1 z-10">
-                    <button
-                        onClick={handleZoomIn}
-                        className="w-8 h-8 rounded bg-black/40 text-white hover:bg-black/60 transition-colors flex items-center justify-center text-lg font-bold"
-                        title="Zoom In"
-                    >
-                        +
-                    </button>
-                    <button
-                        onClick={handleZoomOut}
-                        className="w-8 h-8 rounded bg-black/40 text-white hover:bg-black/60 transition-colors flex items-center justify-center text-lg font-bold"
-                        title="Zoom Out"
-                    >
-                        −
-                    </button>
-                </div>
+                    {/* Zoom controls */}
+                    <div className="absolute top-2 right-2 flex flex-col gap-1 z-10">
+                        <button
+                            onClick={handleZoomIn}
+                            className="w-8 h-8 rounded bg-black/40 text-white hover:bg-black/60 transition-colors flex items-center justify-center text-lg font-bold"
+                            title="Zoom In"
+                        >
+                            +
+                        </button>
+                        <button
+                            onClick={handleZoomOut}
+                            className="w-8 h-8 rounded bg-black/40 text-white hover:bg-black/60 transition-colors flex items-center justify-center text-lg font-bold"
+                            title="Zoom Out"
+                        >
+                            −
+                        </button>
+                    </div>
 
-                {/* Zoom level indicator */}
-                <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/40 text-white text-xs">
-                    {zoom.toFixed(1)}x
+                    {/* Zoom level indicator */}
+                    <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/40 text-white text-xs">
+                        {zoom.toFixed(1)}x
+                    </div>
                 </div>
             </div>
 
             {/* D-pad for mobile - ALWAYS shown on mobile devices */}
             {isMobile && (
-                <div className="mt-4 flex justify-center">
+                <div className="flex-shrink-0 py-2 flex justify-center">
                     <DPad onDirectionChange={handleDPadDirection} size={140} />
                 </div>
             )}
 
             {/* Character indicator */}
-            <div className="flex items-center gap-2 text-sm text-subtle">
+            <div className="flex-shrink-0 pb-4 flex items-center gap-2 text-sm text-subtle">
                 <span>{CHARACTERS[character].emoji}</span>
                 <span>{CHARACTERS[character].name}</span>
             </div>
