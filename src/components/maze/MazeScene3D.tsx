@@ -498,9 +498,9 @@ export function MazeScene3D({
                     <Canvas
                         shadows
                         camera={{ fov: 75, near: 0.1, far: 100 }}
+                        dpr={Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2)}
                         gl={{
                             antialias: !isMobile,
-                            pixelRatio: Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2)
                         }}
                         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
                     >
