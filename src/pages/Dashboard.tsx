@@ -10,6 +10,7 @@ import { VoxelPreview } from '../components/voxel/VoxelRenderer';
 import { CurvePreview } from '../components/curves/CurveRenderer';
 import { TilePreview } from '../components/tiles/TileRenderer';
 import { LEDMatrixPreview } from '../components/led/LEDMatrixRenderer';
+import mazePreview from '../assets/maze.png';
 
 interface LibraryCard {
   id: string;
@@ -285,9 +286,11 @@ export function Dashboard() {
                 className="h-48 flex items-center justify-center overflow-hidden"
                 style={{ backgroundColor: 'color-mix(in srgb, #06b6d4 5%, var(--color-void))' }}
               >
-                <div className="text-7xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-                  🌀
-                </div>
+                <img 
+                  src={mazePreview} 
+                  alt="Maze Runner Preview"
+                  className="w-32 h-32 object-cover rounded-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
+                />
               </div>
 
               {/* Info */}

@@ -63,7 +63,7 @@ export function LEDMatrix() {
   const [speed, setSpeed] = useState((settings.speed as number) || 100);
   const [showGlow, setShowGlow] = useState((settings.showGlow as boolean) ?? true);
   const [textMode, setTextMode] = useState((settings.textMode as boolean) ?? isDRockDomain);
-  const [customText, setCustomText] = useState((settings.customText as string) || 'HAPPY BIRTHDAY!');
+  const [customText, setCustomText] = useState((settings.customText as string) || 'MERRY CHRISTMAS!!');
   const [textColor, setTextColor] = useState((settings.textColor as string) || '#00ff00');
 
   const spaceInfo = useMemo(
