@@ -6,8 +6,12 @@ import { VoxelSpace } from './pages/VoxelSpace';
 import { ParametricCurves } from './pages/ParametricCurves';
 import { TilePatterns } from './pages/TilePatterns';
 import { LEDMatrix } from './pages/LEDMatrix';
-import { PuzzleSelection } from './pages/PuzzleSelection';
-import { PuzzlePlay } from './pages/PuzzlePlay';
+import { GamesHub } from './pages/GamesHub';
+import { PuzzleGame } from './pages/PuzzleGame';
+import { TetrisPage } from './pages/TetrisPage';
+import { SudokuPage } from './pages/SudokuPage';
+import { WordSearchPage } from './pages/WordSearchPage';
+import { WordlePage } from './pages/WordlePage';
 import { MazeSelection } from './pages/MazeSelection';
 import { MazePlay } from './pages/MazePlay';
 import { TiltCalibration } from './pages/TiltCalibration';
@@ -48,8 +52,20 @@ function App() {
         <Route path="/curves" element={<ParametricCurves />} />
         <Route path="/tiles" element={<TilePatterns />} />
         <Route path="/led" element={<LEDMatrix />} />
-        <Route path="/puzzle" element={<PuzzleSelection />} />
-        <Route path="/puzzle/play" element={<PuzzlePlay />} />
+
+        {/* Games section */}
+        <Route path="/games" element={<GamesHub />} />
+        <Route path="/games/puzzles" element={<PuzzleGame />} />
+        <Route path="/games/tetris" element={<TetrisPage />} />
+        <Route path="/games/sudoku" element={<SudokuPage />} />
+        <Route path="/games/word-search" element={<WordSearchPage />} />
+        <Route path="/games/wordle" element={<WordlePage />} />
+
+        {/* Redirects from old puzzle routes */}
+        <Route path="/puzzle" element={<Navigate to="/games" replace />} />
+        <Route path="/puzzle/play" element={<Navigate to="/games/puzzles" replace />} />
+
+        {/* Maze section */}
         <Route path="/maze" element={<MazeSelection />} />
         <Route path="/maze/calibrate" element={<TiltCalibration />} />
         <Route path="/maze/play" element={<MazePlay />} />

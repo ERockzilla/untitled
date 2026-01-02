@@ -132,7 +132,7 @@ export function Dashboard() {
               <div className="text-sm text-subtle">Libraries</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold" style={{ color: '#f59e0b' }}>2</div>
+              <div className="text-3xl font-bold" style={{ color: '#f59e0b' }}>6</div>
               <div className="text-sm text-subtle">Games</div>
             </div>
             <div className="text-center">
@@ -234,46 +234,150 @@ export function Dashboard() {
         <div className="mt-16">
           <h2 className="text-2xl font-bold text-text mb-8">Interactive Games</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            {/* Puzzles Card */}
             <Link
-              to="/puzzle"
+              to="/games/puzzles"
               className="group relative overflow-hidden rounded-2xl bg-surface border border-elevated hover:border-muted transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
             >
-              {/* Preview area */}
               <div
                 className="h-48 flex items-center justify-center overflow-hidden"
-                style={{ backgroundColor: 'color-mix(in srgb, #f59e0b 5%, var(--color-void))' }}
+                style={{ backgroundColor: 'color-mix(in srgb, #06b6d4 5%, var(--color-void))' }}
               >
-                <div className="text-7xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
-                  🧩
-                </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-20 h-20 text-cyan-400 transition-transform duration-300 group-hover:scale-110">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.087c0-.355.313-.687.75-.687.438 0 .75.332.75.687v.668c0 .11.045.216.125.295l.554.554c.08.08.186.125.295.125h.668c.355 0 .687.313.687.75s-.332.75-.687.75h-.668a.418.418 0 00-.295.125l-.554.554a.418.418 0 00-.125.295v.668c0 .355-.313.687-.75.687-.438 0-.75-.332-.75-.687v-.668a.418.418 0 00-.125-.295l-.554-.554a.418.418 0 00-.295-.125h-.668c-.355 0-.687-.313-.687-.75s.332-.75.687-.75h.668c.11 0 .216-.045.295-.125l.554-.554c.08-.08.125-.186.125-.295v-.668z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 4.5h6v6h-6zM13.5 4.5h6v6h-6zM4.5 13.5h6v6h-6zM13.5 13.5h6v6h-6z" />
+                </svg>
               </div>
-
-              {/* Info */}
               <div className="p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: '#f59e0b' }}
-                  />
-                  <h3 className="text-lg font-semibold text-text">Interactive Puzzles</h3>
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#06b6d4' }} />
+                  <h3 className="text-lg font-semibold text-text">Puzzles</h3>
                 </div>
-                <p className="text-sm text-subtle">
-                  Classic jigsaw and sliding puzzles with your own images
-                </p>
-                <div className="mt-4 pt-4 border-t border-elevated">
-                  <div className="flex gap-3 text-xs text-subtle">
-                    <span className="px-2 py-1 bg-elevated rounded">🧩 Jigsaw</span>
-                    <span className="px-2 py-1 bg-elevated rounded">🔲 Sliding</span>
-                    <span className="px-2 py-1 bg-elevated rounded">3 Difficulties</span>
-                  </div>
-                </div>
+                <p className="text-sm text-subtle">Classic jigsaw and sliding tile puzzles</p>
               </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" style={{ backgroundColor: '#06b6d4' }} />
+            </Link>
 
-              {/* Hover accent */}
+            {/* Tetris Card */}
+            <Link
+              to="/games/tetris"
+              className="group relative overflow-hidden rounded-2xl bg-surface border border-elevated hover:border-muted transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+            >
               <div
-                className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"
-                style={{ backgroundColor: '#f59e0b' }}
-              />
+                className="h-48 flex items-center justify-center overflow-hidden"
+                style={{ backgroundColor: 'color-mix(in srgb, #f43f5e 5%, var(--color-void))' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="w-20 h-20 text-rose-400 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
+                  <rect x="4" y="2" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.9" />
+                  <rect x="8" y="2" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.7" />
+                  <rect x="12" y="2" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.9" />
+                  <rect x="16" y="2" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.7" />
+                  <rect x="4" y="6" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.6" />
+                  <rect x="8" y="6" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.8" />
+                  <rect x="12" y="6" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.6" />
+                  <rect x="8" y="10" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.9" />
+                  <rect x="12" y="10" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.7" />
+                  <rect x="8" y="14" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.5" />
+                  <rect x="12" y="14" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.4" />
+                  <rect x="8" y="18" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.3" />
+                </svg>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f43f5e' }} />
+                  <h3 className="text-lg font-semibold text-text">Tetris</h3>
+                </div>
+                <p className="text-sm text-subtle">Classic falling blocks - clear lines and chase high scores</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" style={{ backgroundColor: '#f43f5e' }} />
+            </Link>
+
+            {/* Sudoku Card */}
+            <Link
+              to="/games/sudoku"
+              className="group relative overflow-hidden rounded-2xl bg-surface border border-elevated hover:border-muted transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+            >
+              <div
+                className="h-48 flex items-center justify-center overflow-hidden"
+                style={{ backgroundColor: 'color-mix(in srgb, #8b5cf6 5%, var(--color-void))' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-20 h-20 text-purple-400 transition-transform duration-300 group-hover:scale-110">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="9" y1="3" x2="9" y2="21" />
+                  <line x1="15" y1="3" x2="15" y2="21" />
+                  <line x1="3" y1="9" x2="21" y2="9" />
+                  <line x1="3" y1="15" x2="21" y2="15" />
+                  <text x="5.5" y="7.5" fontSize="4" fill="currentColor" stroke="none" fontWeight="bold">1</text>
+                  <text x="11" y="13.5" fontSize="4" fill="currentColor" stroke="none" fontWeight="bold">5</text>
+                  <text x="17" y="19.5" fontSize="4" fill="currentColor" stroke="none" fontWeight="bold">9</text>
+                </svg>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#8b5cf6' }} />
+                  <h3 className="text-lg font-semibold text-text">Sudoku</h3>
+                </div>
+                <p className="text-sm text-subtle">Fill the 9×9 grid with numbers 1-9 in every row, column, and box</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" style={{ backgroundColor: '#8b5cf6' }} />
+            </Link>
+
+            {/* Word Search Card */}
+            <Link
+              to="/games/word-search"
+              className="group relative overflow-hidden rounded-2xl bg-surface border border-elevated hover:border-muted transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+            >
+              <div
+                className="h-48 flex items-center justify-center overflow-hidden"
+                style={{ backgroundColor: 'color-mix(in srgb, #10b981 5%, var(--color-void))' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-20 h-20 text-emerald-400 transition-transform duration-300 group-hover:scale-110">
+                  <rect x="3" y="3" width="14" height="14" rx="2" />
+                  <text x="5" y="9" fontSize="3.5" fill="currentColor" stroke="none" fontFamily="monospace">WOR</text>
+                  <text x="5" y="13" fontSize="3.5" fill="currentColor" stroke="none" fontFamily="monospace">XDS</text>
+                  <circle cx="18" cy="18" r="4" strokeWidth="2" />
+                  <line x1="20.5" y1="20.5" x2="23" y2="23" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10b981' }} />
+                  <h3 className="text-lg font-semibold text-text">Word Search</h3>
+                </div>
+                <p className="text-sm text-subtle">Find hidden words in a grid of letters</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" style={{ backgroundColor: '#10b981' }} />
+            </Link>
+
+            {/* Wordle Card */}
+            <Link
+              to="/games/wordle"
+              className="group relative overflow-hidden rounded-2xl bg-surface border border-elevated hover:border-muted transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+            >
+              <div
+                className="h-48 flex items-center justify-center overflow-hidden"
+                style={{ backgroundColor: 'color-mix(in srgb, #eab308 5%, var(--color-void))' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="w-24 h-16 transition-transform duration-300 group-hover:scale-110">
+                  <rect x="1" y="8" width="4.5" height="4.5" rx="0.5" fill="#6aaa64" />
+                  <rect x="6" y="8" width="4.5" height="4.5" rx="0.5" fill="#c9b458" />
+                  <rect x="11" y="8" width="4.5" height="4.5" rx="0.5" fill="#787c7e" />
+                  <rect x="16" y="8" width="4.5" height="4.5" rx="0.5" fill="#6aaa64" />
+                  <text x="2.25" y="11.5" fontSize="3" fill="white" fontWeight="bold" textAnchor="middle">W</text>
+                  <text x="8.25" y="11.5" fontSize="3" fill="white" fontWeight="bold" textAnchor="middle">O</text>
+                  <text x="13.25" y="11.5" fontSize="3" fill="white" fontWeight="bold" textAnchor="middle">R</text>
+                  <text x="18.25" y="11.5" fontSize="3" fill="white" fontWeight="bold" textAnchor="middle">D</text>
+                </svg>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#eab308' }} />
+                  <h3 className="text-lg font-semibold text-text">Wordle</h3>
+                </div>
+                <p className="text-sm text-subtle">Guess the 5-letter word in 6 tries with color hints</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" style={{ backgroundColor: '#eab308' }} />
             </Link>
 
             {/* Maze Runner Card */}
@@ -281,45 +385,26 @@ export function Dashboard() {
               to="/maze"
               className="group relative overflow-hidden rounded-2xl bg-surface border border-elevated hover:border-muted transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
             >
-              {/* Preview area */}
               <div
                 className="h-48 flex items-center justify-center overflow-hidden"
-                style={{ backgroundColor: 'color-mix(in srgb, #06b6d4 5%, var(--color-void))' }}
+                style={{ backgroundColor: 'color-mix(in srgb, #f59e0b 5%, var(--color-void))' }}
               >
-                <img 
-                  src={mazePreview} 
+                <img
+                  src={mazePreview}
                   alt="Maze Runner Preview"
                   className="w-32 h-32 object-cover rounded-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
                 />
               </div>
-
-              {/* Info */}
               <div className="p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: '#06b6d4' }}
-                  />
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f59e0b' }} />
                   <h3 className="text-lg font-semibold text-text">Maze Runner</h3>
                 </div>
-                <p className="text-sm text-subtle">
-                  Navigate procedural mazes with tilt controls or touch
-                </p>
-                <div className="mt-4 pt-4 border-t border-elevated">
-                  <div className="flex gap-3 text-xs text-subtle">
-                    <span className="px-2 py-1 bg-elevated rounded">📱 Tilt</span>
-                    <span className="px-2 py-1 bg-elevated rounded">👆 Touch</span>
-                    <span className="px-2 py-1 bg-elevated rounded">6 Characters</span>
-                  </div>
-                </div>
+                <p className="text-sm text-subtle">Navigate procedural mazes with tilt controls or touch</p>
               </div>
-
-              {/* Hover accent */}
-              <div
-                className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"
-                style={{ backgroundColor: '#06b6d4' }}
-              />
+              <div className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" style={{ backgroundColor: '#f59e0b' }} />
             </Link>
+
           </div>
         </div>
       </main>
