@@ -7,13 +7,13 @@ import { useState, useEffect } from 'react';
 export function TetrisPage() {
     const { theme, toggleTheme } = useTheme();
     const [stats, setStats] = useState(loadGameStats('tetris'));
-    const [currentScore, setCurrentScore] = useState(0);
+    const [, setCurrentScore] = useState(0);
 
     useEffect(() => {
         setStats(loadGameStats('tetris'));
     }, []);
 
-    const handleGameOver = (score: number, lines: number, level: number) => {
+    const handleGameOver = (score: number, _lines: number, _level: number) => {
         // Consider it a "win" if they got at least 1000 points
         const won = score >= 1000;
         const newStats = recordGameResult('tetris', won, score);

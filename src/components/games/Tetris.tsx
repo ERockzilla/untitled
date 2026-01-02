@@ -189,7 +189,7 @@ export function Tetris({ onGameOver, onScoreChange }: TetrisProps) {
     const [isPaused, setIsPaused] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
 
-    const gameLoopRef = useRef<number>();
+    const gameLoopRef = useRef<number | undefined>(undefined);
     const lastDropRef = useRef<number>(0);
 
     // Calculate drop speed based on level
