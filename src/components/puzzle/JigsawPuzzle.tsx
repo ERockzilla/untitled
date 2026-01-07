@@ -9,6 +9,8 @@ import {
     isJigsawComplete,
 } from '../../lib/puzzleUtils';
 import { useTheme } from '../../lib/ThemeContext';
+import { launchConfetti, showAchievement } from '../../lib/useEasterEggs';
+import { hapticFeedback } from '../../lib/useTouchControls';
 
 interface JigsawPuzzleProps {
     imageUrl: string;
@@ -192,6 +194,10 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
     // Check completion
     useEffect(() => {
         if (pieces.length > 0 && isJigsawComplete(pieces)) {
+            // 🎉 Celebration!
+            hapticFeedback('heavy');
+            launchConfetti({ particleCount: 200, spread: 120 });
+            showAchievement('Puzzle Master!', 'All pieces in place!', '🧩');
             onComplete();
         }
     }, [pieces, onComplete]);

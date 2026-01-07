@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     WORD_CATEGORIES,
     getRandomWords,
     type WordCategory
 } from '../../lib/wordLists';
+import { launchConfetti, showAchievement } from '../../lib/useEasterEggs';
+import { hapticFeedback } from '../../lib/useTouchControls';
 
 interface WordSearchProps {
     category?: WordCategory;
@@ -223,11 +225,48 @@ export function WordSearch({
         setSelection(prev => prev ? { ...prev, endRow: row, endCol: col } : null);
     };
 
+    // Touch events for mobile support
+    const gridRef = useRef<HTMLDivElement>(null);
+
+    const handleCellTouchStart = (row: number, col: number, e: React.TouchEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+        setSelection({ startRow: row, startCol: col, endRow: row, endCol: col });
+        hapticFeedback('light');
+    };
+
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+        if (!isDragging || !selection) return;
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+
+        if (element) {
+            const row = parseInt(element.getAttribute('data-row') || '-1');
+            const col = parseInt(element.getAttribute('data-col') || '-1');
+            if (row >= 0 && col >= 0) {
+                setSelection(prev => prev ? { ...prev, endRow: row, endCol: col } : null);
+            }
+        }
+    }, [isDragging, selection]);
+
     const handleMouseUp = () => {
         if (selection) {
             const foundWord = checkSelection(selection, positions, foundWords);
             if (foundWord) {
                 setFoundWords(prev => new Set([...prev, foundWord]));
+                hapticFeedback('medium');
+
+                // 🎉 Easter eggs when finding words!
+                const wordsFound = foundWords.size + 1;
+                if (wordsFound === words.length) {
+                    // All words found!
+                    launchConfetti({ particleCount: 150, spread: 100 });
+                    showAchievement('Word Master!', `Found all ${words.length} words!`, '🏆');
+                } else if (wordsFound === Math.ceil(words.length / 2)) {
+                    showAchievement('Halfway!', 'Keep going!', '✨');
+                }
             }
         }
         setIsDragging(false);
@@ -308,12 +347,16 @@ export function WordSearch({
             {/* Grid */}
             <div className="order-1 lg:order-2">
                 <div
-                    className="grid gap-0.5 p-2 bg-elevated rounded-lg select-none"
+                    ref={gridRef}
+                    className="grid gap-0.5 p-2 bg-elevated rounded-lg select-none touch-none"
                     style={{
                         gridTemplateColumns: `repeat(${gridSize}, ${CELL_SIZE}px)`,
                     }}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleMouseUp}
+                    onTouchCancel={handleMouseUp}
                 >
                     {grid.map((row, rowIndex) =>
                         row.map((cell, colIndex) => {
@@ -323,8 +366,11 @@ export function WordSearch({
                             return (
                                 <button
                                     key={`${rowIndex}-${colIndex}`}
+                                    data-row={rowIndex}
+                                    data-col={colIndex}
                                     onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
                                     onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
+                                    onTouchStart={(e) => handleCellTouchStart(rowIndex, colIndex, e)}
                                     className={`
                     flex items-center justify-center font-bold text-sm
                     transition-colors rounded
@@ -335,6 +381,7 @@ export function WordSearch({
                                     style={{
                                         width: CELL_SIZE,
                                         height: CELL_SIZE,
+                                        touchAction: 'none',
                                     }}
                                 >
                                     {cell}

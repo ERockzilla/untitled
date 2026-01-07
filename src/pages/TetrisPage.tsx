@@ -2,12 +2,14 @@ import { Link } from 'react-router-dom';
 import { Tetris } from '../components/games/Tetris';
 import { useTheme } from '../lib/ThemeContext';
 import { loadGameStats, recordGameResult } from '../lib/gamesUtils';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { OnboardingOverlay, GAME_HINTS } from '../components/games/OnboardingOverlay';
 
 export function TetrisPage() {
     const { theme, toggleTheme } = useTheme();
     const [stats, setStats] = useState(loadGameStats('tetris'));
     const [, setCurrentScore] = useState(0);
+    const [gameKey, setGameKey] = useState(0); // For forcing game reset
 
     useEffect(() => {
         setStats(loadGameStats('tetris'));
@@ -19,6 +21,10 @@ export function TetrisPage() {
         const newStats = recordGameResult('tetris', won, score);
         setStats(newStats);
     };
+
+    const restartGame = useCallback(() => {
+        setGameKey(k => k + 1);
+    }, []);
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -60,6 +66,17 @@ export function TetrisPage() {
                             </div>
                         </div>
 
+                        {/* Quick restart button */}
+                        <button
+                            onClick={restartGame}
+                            className="w-9 h-9 rounded-lg bg-elevated hover:bg-muted transition-colors flex items-center justify-center text-subtle hover:text-text"
+                            title="Quick Restart"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+
                         {/* Theme toggle */}
                         <button
                             onClick={toggleTheme}
@@ -80,15 +97,16 @@ export function TetrisPage() {
             </header>
 
             {/* Main content */}
-            <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
+            <main className="flex-1 p-3 sm:p-6 flex flex-col items-center justify-start gap-4 overflow-auto">
                 <Tetris
+                    key={gameKey}
                     onGameOver={handleGameOver}
                     onScoreChange={setCurrentScore}
                 />
 
-                {/* Controls help */}
-                <div className="mt-6 p-4 bg-elevated rounded-lg border border-muted max-w-md">
-                    <h3 className="text-sm font-medium text-text mb-2">Controls</h3>
+                {/* Controls help - Desktop only */}
+                <div className="mt-6 p-4 bg-elevated rounded-lg border border-muted max-w-md hidden sm:block">
+                    <h3 className="text-sm font-medium text-text mb-2">Keyboard Controls</h3>
                     <div className="grid grid-cols-2 gap-2 text-xs text-subtle">
                         <div className="flex items-center gap-2">
                             <kbd className="px-2 py-1 bg-surface rounded border border-muted">←</kbd>
@@ -117,7 +135,15 @@ export function TetrisPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Mobile controls hint */}
+                <div className="mt-4 text-center text-xs text-subtle sm:hidden">
+                    Swipe to move, tap to rotate, swipe down to drop!
+                </div>
             </main>
+
+            {/* First-time onboarding */}
+            <OnboardingOverlay gameId="tetris" hints={GAME_HINTS.tetris} />
         </div>
     );
 }

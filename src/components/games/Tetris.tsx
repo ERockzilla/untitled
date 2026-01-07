@@ -1,4 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { TouchControls } from './TouchControls';
+import { launchConfetti, screenShake, showAchievement } from '../../lib/useEasterEggs';
+import { hapticFeedback, useTouchControls } from '../../lib/useTouchControls';
+import { useAutoPause } from '../../lib/useAutoPause';
 
 // Tetromino definitions
 const TETROMINOES = {
@@ -67,7 +71,8 @@ interface TetrisProps {
 
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
-const CELL_SIZE = 28;
+const DESKTOP_CELL_SIZE = 28;
+const MOBILE_CELL_SIZE = 18;
 
 // Create empty board
 function createBoard(): (string | null)[][] {
@@ -188,9 +193,27 @@ export function Tetris({ onGameOver, onScoreChange }: TetrisProps) {
     const [gameOver, setGameOver] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+    const boardContainerRef = useRef<HTMLDivElement>(null);
+    const gameAreaRef = useRef<HTMLDivElement>(null);
 
     const gameLoopRef = useRef<number | undefined>(undefined);
     const lastDropRef = useRef<number>(0);
+
+    // Detect mobile device
+    useEffect(() => {
+        const checkMobile = () => {
+            const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isSmallScreen = window.innerWidth <= 768;
+            setIsMobile(hasTouchScreen && isSmallScreen);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Dynamic cell size based on device
+    const CELL_SIZE = isMobile ? MOBILE_CELL_SIZE : DESKTOP_CELL_SIZE;
 
     // Calculate drop speed based on level
     const dropSpeed = Math.max(100, 1000 - (level - 1) * 100);
@@ -284,6 +307,19 @@ export function Tetris({ onGameOver, onScoreChange }: TetrisProps) {
         setCanHold(false);
     }, [currentPiece, heldPiece, nextPiece, canHold, gameOver, isPaused, isPlaying]);
 
+    // Auto-pause when tab loses focus (UX best practice)
+    useAutoPause(isPlaying, isPaused, setIsPaused);
+
+    // Swipe gesture controls for mobile (more intuitive than D-pad)
+    useTouchControls(gameAreaRef, {
+        onSwipeLeft: () => movePiece(-1, 0),
+        onSwipeRight: () => movePiece(1, 0),
+        onSwipeDown: () => hardDrop(),
+        onSwipeUp: () => holdPiece(),
+        onTap: () => rotatePiece(),
+        threshold: 30, // Sensitive enough for quick swipes
+    });
+
     // Lock piece and spawn new one
     const lockPiece = useCallback(() => {
         const newBoard = mergePiece(board, currentPiece);
@@ -299,8 +335,35 @@ export function Tetris({ onGameOver, onScoreChange }: TetrisProps) {
             const newLines = lines + clearedLines;
             setLines(newLines);
 
+            // 🎮 Easter eggs for line clears!
+            hapticFeedback(clearedLines >= 4 ? 'heavy' : clearedLines >= 2 ? 'medium' : 'light');
+
+            if (clearedLines >= 4) {
+                // TETRIS! Big celebration
+                launchConfetti({ particleCount: 100, spread: 80 });
+                screenShake('heavy');
+                showAchievement('TETRIS!', '4 lines cleared at once!', '🔥');
+            } else if (clearedLines >= 2) {
+                screenShake('medium');
+            } else {
+                screenShake('light');
+            }
+
+            // Achievement milestones
+            if (newLines >= 100 && lines < 100) {
+                showAchievement('Century!', '100 lines cleared!', '💯');
+                launchConfetti({ particleCount: 150, spread: 100 });
+            } else if (newLines >= 50 && lines < 50) {
+                showAchievement('Halfway There!', '50 lines cleared!', '🌟');
+            } else if (newLines >= 10 && lines < 10) {
+                showAchievement('Warm Up Complete', '10 lines cleared!', '✨');
+            }
+
             // Level up every 10 lines
             const newLevel = Math.floor(newLines / 10) + 1;
+            if (newLevel > level) {
+                showAchievement(`Level ${newLevel}!`, 'Speed increased!', '⚡');
+            }
             setLevel(newLevel);
         }
 
@@ -453,7 +516,8 @@ export function Tetris({ onGameOver, onScoreChange }: TetrisProps) {
             {/* Main game board */}
             <div className="relative">
                 <div
-                    className="relative bg-void rounded-lg overflow-hidden border-2 border-elevated"
+                    ref={gameAreaRef}
+                    className="relative bg-void rounded-lg overflow-hidden border-2 border-elevated touch-none"
                     style={{
                         width: BOARD_WIDTH * CELL_SIZE,
                         height: BOARD_HEIGHT * CELL_SIZE,
@@ -494,20 +558,20 @@ export function Tetris({ onGameOver, onScoreChange }: TetrisProps) {
                         )
                     )}
 
-                    {/* Ghost piece */}
+                    {/* Ghost piece - enhanced visibility */}
                     {isPlaying && !gameOver && currentPiece.shape.map((row, y) =>
                         row.map((cell, x) =>
                             cell ? (
                                 <div
                                     key={`ghost-${x}-${y}`}
-                                    className="absolute rounded-sm border-2 border-dashed"
+                                    className="absolute rounded-sm border-2 border-dashed animate-ghost-pulse"
                                     style={{
                                         left: (currentPiece.x + x) * CELL_SIZE + 2,
                                         top: (ghostY + y) * CELL_SIZE + 2,
                                         width: CELL_SIZE - 4,
                                         height: CELL_SIZE - 4,
                                         borderColor: currentPiece.color,
-                                        opacity: 0.3,
+                                        backgroundColor: `${currentPiece.color}15`,
                                     }}
                                 />
                             ) : null
@@ -619,7 +683,47 @@ export function Tetris({ onGameOver, onScoreChange }: TetrisProps) {
                         {isPaused ? 'Resume' : 'Pause'}
                     </button>
                 )}
+
+                {/* Mobile hold button */}
+                {isMobile && isPlaying && !gameOver && !isPaused && (
+                    <button
+                        onClick={holdPiece}
+                        className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg text-sm text-purple-400 transition-colors border border-purple-500/30"
+                    >
+                        Hold
+                    </button>
+                )}
             </div>
+
+            {/* Mobile Touch Controls */}
+            {isMobile && isPlaying && !gameOver && !isPaused && (
+                <div className="mt-4 w-full" ref={boardContainerRef}>
+                    <TouchControls
+                        onMove={(direction) => {
+                            switch (direction) {
+                                case 'left':
+                                    movePiece(-1, 0);
+                                    break;
+                                case 'right':
+                                    movePiece(1, 0);
+                                    break;
+                                case 'down':
+                                    movePiece(0, 1);
+                                    setScore(s => s + 1);
+                                    break;
+                                case 'up':
+                                    rotatePiece();
+                                    break;
+                            }
+                        }}
+                        onAction1={rotatePiece}
+                        action1Label="↻"
+                        onAction2={hardDrop}
+                        action2Label="⬇"
+                        size="medium"
+                    />
+                </div>
+            )}
         </div>
     );
 }

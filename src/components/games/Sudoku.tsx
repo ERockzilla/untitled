@@ -8,6 +8,8 @@ import {
     type SudokuNotes,
     type SudokuPuzzle,
 } from '../../lib/sudokuGenerator';
+import { launchConfetti, showAchievement } from '../../lib/useEasterEggs';
+import { hapticFeedback } from '../../lib/useTouchControls';
 
 interface SudokuProps {
     difficulty?: 'easy' | 'medium' | 'hard';
@@ -15,7 +17,15 @@ interface SudokuProps {
     onNewGame?: () => void;
 }
 
-const CELL_SIZE = 44;
+// Cell size increased to 48px for touch accessibility (minimum touch target)
+const CELL_SIZE = 48;
+
+interface MoveHistory {
+    row: number;
+    col: number;
+    prevValue: number;
+    newValue: number;
+}
 
 export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuProps) {
     const [puzzle, setPuzzle] = useState<SudokuPuzzle | null>(null);
@@ -28,6 +38,7 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
     const [isComplete, setIsComplete] = useState(false);
     const [startTime, setStartTime] = useState<number>(0);
     const [elapsedTime, setElapsedTime] = useState(0);
+    const [moveHistory, setMoveHistory] = useState<MoveHistory[]>([]);
 
     // Generate new puzzle
     const newGame = useCallback((diff: 'easy' | 'medium' | 'hard') => {
@@ -84,6 +95,21 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
         const result = checkSolution(board, puzzle.solution);
         if (result.isComplete && result.isCorrect) {
             setIsComplete(true);
+
+            // 🎉 Celebration!
+            hapticFeedback('heavy');
+            launchConfetti({ particleCount: 150, spread: 90 });
+
+            // Time-based achievements
+            const mins = Math.floor(elapsedTime / 60);
+            if (mins < 3) {
+                showAchievement('Speed Demon!', `Solved in ${mins}:${String(elapsedTime % 60).padStart(2, '0')}!`, '⚡');
+            } else if (mins < 10) {
+                showAchievement('Great Job!', 'Puzzle complete!', '✨');
+            } else {
+                showAchievement('Persistence!', 'Never gave up!', '💪');
+            }
+
             onComplete?.(elapsedTime);
         }
     }, [board, puzzle, elapsedTime, onComplete]);
@@ -107,6 +133,12 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
                 return newNotes;
             });
         } else {
+            // Record move for undo
+            const prevValue = board[row][col];
+            if (prevValue !== num) {
+                setMoveHistory(prev => [...prev, { row, col, prevValue, newValue: num }]);
+            }
+
             setBoard(prev => {
                 const newBoard = prev.map(r => [...r]);
                 newBoard[row][col] = num;
@@ -121,12 +153,37 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
                 });
             }
         }
-    }, [selectedCell, givenCells, notesMode, puzzle]);
+    }, [selectedCell, givenCells, notesMode, puzzle, board]);
+
+    // Undo last move
+    const undo = useCallback(() => {
+        const lastMove = moveHistory[moveHistory.length - 1];
+        if (!lastMove) return;
+
+        hapticFeedback('light');
+        setBoard(prev => {
+            const newBoard = prev.map(r => [...r]);
+            newBoard[lastMove.row][lastMove.col] = lastMove.prevValue;
+            return newBoard;
+        });
+        setMoveHistory(prev => prev.slice(0, -1));
+    }, [moveHistory]);
 
     // Keyboard controls
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (isComplete) return;
+
+            // Undo with Ctrl+Z or just Z
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                undo();
+                return;
+            }
+            if (e.key === 'z' || e.key === 'Z') {
+                undo();
+                return;
+            }
 
             if (e.key >= '1' && e.key <= '9') {
                 inputNumber(parseInt(e.key));
@@ -159,7 +216,7 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedCell, inputNumber, isComplete]);
+    }, [selectedCell, inputNumber, isComplete, undo]);
 
     // Format time as MM:SS
     const formatTime = (seconds: number): string => {
@@ -299,15 +356,15 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
                 )}
             </div>
 
-            {/* Number buttons */}
-            <div className="flex gap-2">
+            {/* Number buttons - 48px for touch accessibility */}
+            <div className="flex gap-2 flex-wrap justify-center">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                     <button
                         key={num}
                         onClick={() => inputNumber(num)}
                         className={`
-              w-10 h-10 rounded-lg font-bold text-lg
-              transition-all hover:scale-105
+              w-12 h-12 rounded-lg font-bold text-lg
+              transition-all hover:scale-105 active:scale-95
               ${notesMode
                                 ? 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30'
                                 : 'bg-elevated text-text hover:bg-muted'
@@ -320,7 +377,25 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
             </div>
 
             {/* Action buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap justify-center">
+                {/* Undo button */}
+                <button
+                    onClick={undo}
+                    disabled={moveHistory.length === 0}
+                    className={`
+            px-4 py-2 rounded-lg transition-colors text-sm flex items-center gap-2
+            ${moveHistory.length > 0
+                            ? 'bg-elevated hover:bg-muted text-text'
+                            : 'bg-elevated/50 text-subtle cursor-not-allowed'
+                        }
+          `}
+                    title="Undo (Z or Ctrl+Z)"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    </svg>
+                    Undo
+                </button>
                 <button
                     onClick={() => inputNumber(0)}
                     className="px-4 py-2 rounded-lg bg-elevated hover:bg-muted text-text transition-colors text-sm flex items-center gap-2"

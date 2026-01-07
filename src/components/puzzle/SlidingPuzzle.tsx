@@ -11,6 +11,8 @@ import {
     isSlidingComplete,
 } from '../../lib/puzzleUtils';
 import { useTheme } from '../../lib/ThemeContext';
+import { launchConfetti, showAchievement } from '../../lib/useEasterEggs';
+import { hapticFeedback } from '../../lib/useTouchControls';
 
 interface SlidingPuzzleProps {
     imageUrl: string;
@@ -81,9 +83,13 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
     // Check completion
     useEffect(() => {
         if (tiles.length > 0 && !isShuffling && isSlidingComplete(tiles)) {
+            // 🎉 Celebration!
+            hapticFeedback('heavy');
+            launchConfetti({ particleCount: 120, spread: 90 });
+            showAchievement('Puzzle Complete!', `Solved in ${moveCount} moves!`, '🎯');
             onComplete();
         }
-    }, [tiles, isShuffling, onComplete]);
+    }, [tiles, isShuffling, onComplete, moveCount]);
 
     // Keyboard controls
     useEffect(() => {
@@ -128,9 +134,72 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
 
     const handleTileClick = useCallback((tileIdx: number) => {
         if (canSlide(tiles, tileIdx, cols)) {
+            hapticFeedback('light');
             setTiles(slideTile(tiles, tileIdx));
             setMoveCount(m => m + 1);
         }
+    }, [tiles, cols]);
+
+    // Swipe gesture support for mobile
+    const touchStartRef = useRef<{ x: number; y: number; tileIdx: number | null }>({ x: 0, y: 0, tileIdx: null });
+
+    const handleTileSwipeStart = useCallback((tileIdx: number, e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        touchStartRef.current = { x: touch.clientX, y: touch.clientY, tileIdx };
+    }, []);
+
+    const handleTileSwipeEnd = useCallback((e: React.TouchEvent) => {
+        const { x: startX, y: startY, tileIdx } = touchStartRef.current;
+        if (tileIdx === null) return;
+
+        const touch = e.changedTouches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        const threshold = 20;
+
+        // Determine swipe direction
+        if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
+            // Find empty tile
+            const emptyTile = tiles.find(t => t.isEmpty);
+            if (!emptyTile) return;
+
+            const tile = tiles[tileIdx];
+            const tilePos = tile.currentIndex;
+            const emptyPos = emptyTile.currentIndex;
+            const tileRow = Math.floor(tilePos / cols);
+            const tileCol = tilePos % cols;
+            const emptyRow = Math.floor(emptyPos / cols);
+            const emptyCol = emptyPos % cols;
+
+            // Check if swipe direction matches empty tile direction
+            const swipeUp = dy < -threshold && Math.abs(dx) < threshold;
+            const swipeDown = dy > threshold && Math.abs(dx) < threshold;
+            const swipeLeft = dx < -threshold && Math.abs(dy) < threshold;
+            const swipeRight = dx > threshold && Math.abs(dy) < threshold;
+
+            const emptyAbove = emptyRow === tileRow - 1 && emptyCol === tileCol;
+            const emptyBelow = emptyRow === tileRow + 1 && emptyCol === tileCol;
+            const emptyLeft = emptyCol === tileCol - 1 && emptyRow === tileRow;
+            const emptyRight = emptyCol === tileCol + 1 && emptyRow === tileRow;
+
+            if ((swipeUp && emptyAbove) || (swipeDown && emptyBelow) ||
+                (swipeLeft && emptyLeft) || (swipeRight && emptyRight)) {
+                if (canSlide(tiles, tileIdx, cols)) {
+                    hapticFeedback('light');
+                    setTiles(slideTile(tiles, tileIdx));
+                    setMoveCount(m => m + 1);
+                }
+            }
+        } else {
+            // Tap fallback
+            if (canSlide(tiles, tileIdx, cols)) {
+                hapticFeedback('light');
+                setTiles(slideTile(tiles, tileIdx));
+                setMoveCount(m => m + 1);
+            }
+        }
+
+        touchStartRef.current = { x: 0, y: 0, tileIdx: null };
     }, [tiles, cols]);
 
     const handleReset = useCallback(() => {
@@ -197,6 +266,7 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
                     const currentCol = tile.currentIndex % cols;
 
                     const canMove = canSlide(tiles, tiles.indexOf(tile), cols);
+                    const tileIdx = tiles.indexOf(tile);
 
                     return (
                         <div
@@ -209,10 +279,11 @@ export function SlidingPuzzle({ imageUrl, config, onComplete }: SlidingPuzzlePro
                                 width: displayPieceWidth,
                                 height: displayPieceHeight,
                             }}
-                            onClick={() => handleTileClick(tiles.indexOf(tile))}
+                            onClick={() => handleTileClick(tileIdx)}
+                            onTouchStart={(e) => handleTileSwipeStart(tileIdx, e)}
                             onTouchEnd={(e) => {
                                 e.preventDefault();
-                                handleTileClick(tiles.indexOf(tile));
+                                handleTileSwipeEnd(e);
                             }}
                         >
                             <div

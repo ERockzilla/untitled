@@ -16,6 +16,7 @@ import { MazeSelection } from './pages/MazeSelection';
 import { MazePlay } from './pages/MazePlay';
 import { TiltCalibration } from './pages/TiltCalibration';
 import { MathNatureBackground } from './components/background/MathNatureBackground';
+import { useEasterEggs } from './lib/useEasterEggs';
 
 // Check if we're on the DRock VIP subdomain
 const isDRockDomain = window.location.hostname.startsWith('d.');
@@ -38,6 +39,9 @@ function HomeRoute() {
 }
 
 function App() {
+  // 🎮 Enable site-wide easter eggs (Konami code, etc.)
+  useEasterEggs();
+
   return (
     <>
       {/* Mathematical matrix-style animated background */}

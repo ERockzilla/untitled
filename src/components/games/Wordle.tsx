@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyWord, getRandomWord, isValidWord } from '../../lib/wordleWords';
+import { launchConfetti, showAchievement, screenShake } from '../../lib/useEasterEggs';
+import { hapticFeedback } from '../../lib/useTouchControls';
 
 interface WordleProps {
     mode?: 'daily' | 'random';
@@ -59,6 +61,23 @@ export function Wordle({ mode = 'random', onComplete }: WordleProps) {
     const [shake, setShake] = useState(false);
     const [message, setMessage] = useState('');
     const [revealRow, setRevealRow] = useState(-1);
+
+    // Color-blind mode for accessibility (stores in localStorage)
+    const [colorBlindMode, setColorBlindMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('wordle_colorblind') === 'true';
+        }
+        return false;
+    });
+
+    // Save color-blind preference
+    const toggleColorBlind = useCallback(() => {
+        setColorBlindMode(prev => {
+            const newValue = !prev;
+            localStorage.setItem('wordle_colorblind', String(newValue));
+            return newValue;
+        });
+    }, []);
 
     // Initialize game
     const newGame = useCallback((gameMode: 'daily' | 'random') => {
@@ -126,12 +145,28 @@ export function Wordle({ mode = 'random', onComplete }: WordleProps) {
             updateKeyboard(currentGuess, states);
             setRevealRow(-1);
 
-            // Check win/lose
+            // Check win/lose with celebrations!
             if (currentGuess === targetWord) {
                 setGameState('won');
-                onComplete?.(true, guesses.length + 1);
+                hapticFeedback('heavy');
+                launchConfetti({ particleCount: 200, spread: 100 });
+
+                // Different achievements based on attempts
+                const attempts = guesses.length + 1;
+                if (attempts === 1) {
+                    showAchievement('GENIUS!', 'First try!', '🧠');
+                } else if (attempts === 2) {
+                    showAchievement('Magnificent!', 'Got it in 2!', '🌟');
+                } else if (attempts <= 4) {
+                    showAchievement('Great!', `Solved in ${attempts} tries!`, '✨');
+                } else {
+                    showAchievement('Phew!', 'Close one!', '😅');
+                }
+
+                onComplete?.(true, attempts);
             } else if (guesses.length + 1 >= MAX_GUESSES) {
                 setGameState('lost');
+                screenShake('medium');
                 setMessage(`The word was ${targetWord}`);
                 onComplete?.(false, MAX_GUESSES);
             }
@@ -200,7 +235,7 @@ export function Wordle({ mode = 'random', onComplete }: WordleProps) {
                     <div
                         key={j}
                         className={`
-              w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center
+              w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center relative
               text-2xl font-bold uppercase rounded-lg
               transition-all duration-300
               ${state === 'empty' ? 'border-2 border-muted' : ''}
@@ -214,6 +249,12 @@ export function Wordle({ mode = 'random', onComplete }: WordleProps) {
                         }}
                     >
                         {letter}
+                        {/* Color-blind accessibility symbols */}
+                        {colorBlindMode && state !== 'empty' && state !== 'tbd' && (
+                            <span className="absolute bottom-0.5 right-1 text-[10px] opacity-70">
+                                {state === 'correct' ? '✓' : state === 'present' ? '○' : '✗'}
+                            </span>
+                        )}
                     </div>
                 );
             }
@@ -295,6 +336,21 @@ export function Wordle({ mode = 'random', onComplete }: WordleProps) {
             <div className="flex flex-col gap-1.5 mt-4">
                 {renderKeyboard()}
             </div>
+
+            {/* Color-blind mode toggle */}
+            <button
+                onClick={toggleColorBlind}
+                className={`mt-4 px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors ${colorBlindMode
+                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
+                        : 'bg-elevated text-subtle hover:bg-muted'
+                    }`}
+            >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Color-blind mode {colorBlindMode ? 'ON' : 'OFF'}
+            </button>
 
             {/* Shake animation */}
             <style>{`
