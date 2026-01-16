@@ -69,6 +69,7 @@ Thought so. 💅
 };
 
 import { ThemeProvider } from './lib/ThemeContext';
+import { AuthProvider } from './lib/AuthContext';
 
 // Fire the console message when the app loads
 showConsoleMessage();
@@ -76,9 +77,11 @@ showConsoleMessage();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 );

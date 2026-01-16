@@ -1,30 +1,47 @@
 import { Link } from 'react-router-dom';
 import { Wordle } from '../components/games/Wordle';
 import { useTheme } from '../lib/ThemeContext';
-import { loadGameStats, recordGameResult, getWinPercentage } from '../lib/gamesUtils';
+import { useAuth } from '../lib/AuthContext';
+import { loadGameStats, recordGameResultWithSync, getWinPercentage } from '../lib/gamesUtils';
 import { useState, useCallback } from 'react';
+import { LoginModal } from '../components/auth/LoginModal';
+import { UserMenu } from '../components/auth/UserMenu';
+import { Leaderboard } from '../components/games/Leaderboard';
 
 export function WordlePage() {
     const { theme, toggleTheme } = useTheme();
+    const { user } = useAuth();
     const [stats, setStats] = useState(loadGameStats('wordle'));
     const [mode, setMode] = useState<'daily' | 'random'>('random');
     const [key, setKey] = useState(0);
     const [showStats, setShowStats] = useState(false);
+    const [showLogin, setShowLogin] = useState(false);
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
 
-    const handleComplete = useCallback((won: boolean, attempts: number) => {
-        const newStats = recordGameResult('wordle', won, won ? (MAX_GUESSES - attempts + 1) * 100 : 0);
+    const MAX_GUESSES = 6;
+
+    const handleComplete = useCallback(async (won: boolean, attempts: number) => {
+        const score = won ? (MAX_GUESSES - attempts + 1) * 100 : 0;
+        const newStats = await recordGameResultWithSync(
+            'wordle',
+            won,
+            user?.id ?? null,
+            {
+                score,
+                attempts,
+                isDaily: mode === 'daily',
+            }
+        );
         setStats(newStats);
         // Show stats after short delay
         setTimeout(() => setShowStats(true), 1500);
-    }, []);
+    }, [user?.id, mode]);
 
     const handleModeChange = (newMode: 'daily' | 'random') => {
         setMode(newMode);
         setKey(k => k + 1);
         setShowStats(false);
     };
-
-    const MAX_GUESSES = 6;
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -76,6 +93,17 @@ export function WordlePage() {
                             </button>
                         </div>
 
+                        {/* Leaderboard button */}
+                        <button
+                            onClick={() => setShowLeaderboard(true)}
+                            className="w-9 h-9 rounded-lg bg-elevated hover:bg-muted transition-colors flex items-center justify-center text-subtle hover:text-text"
+                            title="Leaderboard"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+
                         {/* Stats button */}
                         <button
                             onClick={() => setShowStats(true)}
@@ -86,6 +114,9 @@ export function WordlePage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                         </button>
+
+                        {/* User menu */}
+                        <UserMenu onLoginClick={() => setShowLogin(true)} />
 
                         {/* Theme toggle */}
                         <button
@@ -168,6 +199,24 @@ export function WordlePage() {
                             </div>
                         </div>
 
+                        {/* Sign in prompt for anonymous users */}
+                        {!user && (
+                            <div className="mb-4 p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+                                <p className="text-sm text-cyan-400 text-center">
+                                    <button
+                                        onClick={() => {
+                                            setShowStats(false);
+                                            setShowLogin(true);
+                                        }}
+                                        className="underline hover:no-underline"
+                                    >
+                                        Sign in
+                                    </button>
+                                    {' '}to sync your stats & compete on leaderboards!
+                                </p>
+                            </div>
+                        )}
+
                         <button
                             onClick={() => setShowStats(false)}
                             className="w-full py-3 bg-green-500 rounded-lg text-white font-bold hover:bg-green-400 transition-colors"
@@ -177,6 +226,20 @@ export function WordlePage() {
                     </div>
                 </div>
             )}
+
+            {/* Leaderboard modal */}
+            {showLeaderboard && (
+                <Leaderboard
+                    gameType="wordle"
+                    onClose={() => setShowLeaderboard(false)}
+                />
+            )}
+
+            {/* Login modal */}
+            <LoginModal
+                isOpen={showLogin}
+                onClose={() => setShowLogin(false)}
+            />
         </div>
     );
 }

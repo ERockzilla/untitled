@@ -1,7 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../lib/ThemeContext';
-import { loadGameStats } from '../lib/gamesUtils';
+import { useAuth } from '../lib/AuthContext';
+import { loadGameStats, migrateLocalToCloud, needsMigration } from '../lib/gamesUtils';
 import { loadProgress } from '../lib/puzzleUtils';
+import { LoginModal } from '../components/auth/LoginModal';
+import { UserMenu } from '../components/auth/UserMenu';
 
 // Modern SVG icons for each game
 const GameIcons = {
@@ -132,6 +136,21 @@ function GameCard({ to, title, description, icon, color, stats }: GameCardProps)
 
 export function GamesHub() {
     const { theme, toggleTheme } = useTheme();
+    const { user } = useAuth();
+    const [showLogin, setShowLogin] = useState(false);
+
+    // Migrate local stats to cloud when user first signs in
+    useEffect(() => {
+        if (user && needsMigration()) {
+            migrateLocalToCloud(user.id).then(({ error }) => {
+                if (error) {
+                    console.error('Migration error:', error);
+                } else {
+                    console.log('Local stats migrated to cloud successfully');
+                }
+            });
+        }
+    }, [user]);
 
     // Load stats for each game
     const tetrisStats = loadGameStats('tetris');
@@ -233,6 +252,9 @@ export function GamesHub() {
                             </div>
                         </div>
 
+                        {/* User menu */}
+                        <UserMenu onLoginClick={() => setShowLogin(true)} />
+
                         {/* Theme toggle */}
                         <button
                             onClick={toggleTheme}
@@ -282,6 +304,12 @@ export function GamesHub() {
                     </div>
                 </div>
             </main>
+
+            {/* Login modal */}
+            <LoginModal
+                isOpen={showLogin}
+                onClose={() => setShowLogin(false)}
+            />
         </div>
     );
 }

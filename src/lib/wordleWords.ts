@@ -1,4 +1,4 @@
-// Wordle word lists - solutions and valid guesses
+// Wordle word list - solutions for daily/random games
 
 // Common 5-letter words used as solutions (~500 words for variety)
 export const SOLUTION_WORDS = [
@@ -82,24 +82,6 @@ export const SOLUTION_WORDS = [
     'YOUTH', 'ZEBRA', 'ZONES', 'PIANO', 'FLAME', 'CRANE', 'GRAPE', 'BLAME', 'BRAVE', 'CHASE',
 ];
 
-// Additional valid 5-letter words that can be used as guesses but not solutions
-// This is a subset for demonstration - a full implementation would have ~10,000 words
-export const VALID_GUESSES = new Set([
-    ...SOLUTION_WORDS,
-    'AAHED', 'AALII', 'AARGH', 'ABACA', 'ABACI', 'ABACK', 'ABAFT', 'ABAMP', 'ABASE', 'ABASH',
-    'ABATE', 'ABAYA', 'ABBAS', 'ABBES', 'ABBEY', 'ABBOT', 'ABELE', 'ABETS', 'ABHOR', 'ABIDE',
-    'ABLED', 'ABLER', 'ABLES', 'ABMAS', 'ABMHO', 'ABODE', 'ABOHM', 'ABOIL', 'ABOMA', 'ABOON',
-    'ABORT', 'ABOUT', 'ABOVE', 'ABRIS', 'ABUSE', 'ABUTS', 'ABUZZ', 'ABYES', 'ABYSM', 'ABYSS',
-    'ACARI', 'ACERB', 'ACERS', 'ACHED', 'ACHES', 'ACHOO', 'ACIDS', 'ACIDY', 'ACING', 'ACINI',
-    'ACKEE', 'ACMES', 'ACMIC', 'ACNED', 'ACNES', 'ACOCK', 'ACOLD', 'ACORN', 'ACRED', 'ACRES',
-    'ACRID', 'ACTED', 'ACTIN', 'ACTOR', 'ACUTE', 'ADAGE', 'ADAPT', 'ADDAX', 'ADDED', 'ADDER',
-    'ADDLE', 'ADEEM', 'ADEPT', 'ADIEU', 'ADIOS', 'ADITS', 'ADMIT', 'ADMIX', 'ADOBE', 'ADOBO',
-    'ADOPT', 'ADORE', 'ADORN', 'ADULT', 'ADUNC', 'ADUST', 'ADZES', 'AEGIS', 'AEONS', 'AERIE',
-    'AFFIX', 'AFIRE', 'FLOAT', 'BOARD', 'WEAVE', 'PEARL', 'SWIRL', 'GLEAM', 'BLOOM', 'FROST',
-    'CRISP', 'BLEND', 'DWELL', 'GLADE', 'PRISM', 'QUEST', 'LUNAR', 'EMBER', 'SPRIG', 'HAVEN',
-    'CREST', 'WISPY', 'FJORD', 'KNACK', 'PLUMB', 'GUSTY', 'CHUNK', 'SHORN', 'TWEED', 'BLOWN',
-]);
-
 // Get a deterministic word for a given date (daily mode)
 export function getDailyWord(date: Date = new Date()): string {
     const dateString = date.toISOString().split('T')[0];
@@ -113,9 +95,4 @@ export function getDailyWord(date: Date = new Date()): string {
 // Get a random word
 export function getRandomWord(): string {
     return SOLUTION_WORDS[Math.floor(Math.random() * SOLUTION_WORDS.length)];
-}
-
-// Check if a word is valid (can be guessed)
-export function isValidWord(word: string): boolean {
-    return VALID_GUESSES.has(word.toUpperCase());
 }

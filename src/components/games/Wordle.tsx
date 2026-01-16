@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getDailyWord, getRandomWord, isValidWord } from '../../lib/wordleWords';
+import { getDailyWord, getRandomWord } from '../../lib/wordleWords';
 import { launchConfetti, showAchievement, screenShake } from '../../lib/useEasterEggs';
 import { hapticFeedback } from '../../lib/useTouchControls';
 
@@ -117,13 +117,6 @@ export function Wordle({ mode = 'random', onComplete }: WordleProps) {
     const submitGuess = useCallback(() => {
         if (currentGuess.length !== WORD_LENGTH) {
             setMessage('Not enough letters');
-            setShake(true);
-            setTimeout(() => setShake(false), 300);
-            return;
-        }
-
-        if (!isValidWord(currentGuess)) {
-            setMessage('Not in word list');
             setShake(true);
             setTimeout(() => setShake(false), 300);
             return;
