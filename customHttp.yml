@@ -1,0 +1,171 @@
+customHeaders:
+  - pattern: '**/*'
+    headers:
+      - key: Strict-Transport-Security
+        value: max-age=63072000; includeSubDomains; preload
+      - key: Content-Security-Policy
+        value: >-
+          default-src 'self';
+          script-src 'self' 'unsafe-inline' 'unsafe-eval';
+          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+          font-src 'self' https://fonts.gstatic.com data:;
+          img-src 'self' data: blob: https:;
+          connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.supabase.co;
+          frame-src 'none';
+          object-src 'none';
+          base-uri 'self';
+          form-action 'self';
+          frame-ancestors 'none';
+          upgrade-insecure-requests;
+          block-all-mixed-content
+      - key: X-Frame-Options
+        value: DENY
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: X-XSS-Protection
+        value: '1; mode=block'
+      - key: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - key: Permissions-Policy
+        value: >-
+          accelerometer=(),
+          ambient-light-sensor=(),
+          autoplay=(),
+          battery=(),
+          camera=(),
+          cross-origin-isolated=(),
+          display-capture=(),
+          document-domain=(),
+          encrypted-media=(),
+          execution-while-not-rendered=(),
+          execution-while-out-of-viewport=(),
+          fullscreen=(self),
+          geolocation=(),
+          gyroscope=(),
+          keyboard-map=(),
+          magnetometer=(),
+          microphone=(),
+          midi=(),
+          navigation-override=(),
+          payment=(),
+          picture-in-picture=(),
+          publickey-credentials-get=(),
+          screen-wake-lock=(),
+          sync-xhr=(),
+          usb=(),
+          web-share=(),
+          xr-spatial-tracking=()
+      - key: Cross-Origin-Opener-Policy
+        value: same-origin
+      - key: Cross-Origin-Resource-Policy
+        value: same-origin
+      - key: Cross-Origin-Embedder-Policy
+        value: credentialless
+      - key: X-DNS-Prefetch-Control
+        value: 'off'
+      - key: X-Download-Options
+        value: noopen
+      - key: X-Permitted-Cross-Domain-Policies
+        value: none
+      - key: Expect-CT
+        value: max-age=86400, enforce
+      - key: X-Powered-By
+        value: Coffee, Curiosity, and a sprinkle of Math Magic
+      - key: X-Robots-Tag
+        value: index, follow, max-image-preview:large
+      - key: X-Developer-Note
+        value: Welcome fellow dev! Check out /games for some fun.
+      - key: X-Hidden-Message
+        value: The cake is a lie, but these puzzles are real.
+      - key: X-Security-Level
+        value: Maximum. We take this seriously.
+
+  - pattern: '*.js'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+      - key: X-Asset-Type
+        value: JavaScript Bundle
+
+  - pattern: '*.css'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+      - key: X-Asset-Type
+        value: Stylesheet
+
+  - pattern: '*.woff2'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+      - key: X-Asset-Type
+        value: Font
+
+  - pattern: '*.woff'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+
+  - pattern: '*.png'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=86400, stale-while-revalidate=604800
+
+  - pattern: '*.jpg'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=86400, stale-while-revalidate=604800
+
+  - pattern: '*.jpeg'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=86400, stale-while-revalidate=604800
+
+  - pattern: '*.webp'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=86400, stale-while-revalidate=604800
+
+  - pattern: '*.svg'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=86400, stale-while-revalidate=604800
+
+  - pattern: '*.html'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=0, must-revalidate
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: Content-Type
+        value: text/html; charset=utf-8
+
+  - pattern: '/index.html'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=0, must-revalidate
+      - key: X-App-Version
+        value: '1.0.0'
+      - key: X-Welcome
+        value: Games | Puzzles | Art | Mazes
+
+  - pattern: '/puzzles/*'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=604800, stale-while-revalidate=2592000
+      - key: X-Puzzle-Hint
+        value: Patience is a virtue, but so is a good strategy!
+
+  - pattern: '/sw.js'
+    headers:
+      - key: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - key: Service-Worker-Allowed
+        value: /
+
+  - pattern: '*.json'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=300, stale-while-revalidate=600
+      - key: Content-Type
+        value: application/json; charset=utf-8

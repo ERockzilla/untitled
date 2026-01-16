@@ -125,7 +125,7 @@ export function SudokuPage() {
             </header>
 
             {/* Main content */}
-            <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
+            <main className="flex-1 flex flex-col items-center justify-center p-2 sm:p-6 overflow-x-auto">
                 <Sudoku
                     key={`${difficulty}-${key}`}
                     difficulty={difficulty}

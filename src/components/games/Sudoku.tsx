@@ -17,8 +17,16 @@ interface SudokuProps {
     onNewGame?: () => void;
 }
 
-// Cell size increased to 48px for touch accessibility (minimum touch target)
-const CELL_SIZE = 48;
+// Get responsive cell size based on screen width
+function getCellSize(): number {
+    if (typeof window === 'undefined') return 40;
+    const screenWidth = window.innerWidth;
+    // Leave room for padding (32px total) and ensure minimum touch target
+    const maxGridWidth = screenWidth - 32;
+    const maxCellSize = Math.floor((maxGridWidth - 8) / 9); // -8 for grid borders
+    // Clamp between 36px (minimum touch target) and 48px (comfortable size)
+    return Math.min(48, Math.max(36, maxCellSize));
+}
 
 interface MoveHistory {
     row: number;
@@ -39,6 +47,14 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
     const [startTime, setStartTime] = useState<number>(0);
     const [elapsedTime, setElapsedTime] = useState(0);
     const [moveHistory, setMoveHistory] = useState<MoveHistory[]>([]);
+    const [cellSize, setCellSize] = useState(getCellSize());
+
+    // Update cell size on window resize
+    useEffect(() => {
+        const handleResize = () => setCellSize(getCellSize());
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Generate new puzzle
     const newGame = useCallback((diff: 'easy' | 'medium' | 'hard') => {
@@ -266,8 +282,8 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
             <div
                 className="relative bg-elevated rounded-lg overflow-hidden"
                 style={{
-                    width: CELL_SIZE * 9 + 8,
-                    height: CELL_SIZE * 9 + 8,
+                    width: cellSize * 9 + 8,
+                    height: cellSize * 9 + 8,
                 }}
             >
                 {/* Grid lines */}
@@ -281,8 +297,8 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
                 <div
                     className="relative grid"
                     style={{
-                        gridTemplateColumns: `repeat(9, ${CELL_SIZE}px)`,
-                        gridTemplateRows: `repeat(9, ${CELL_SIZE}px)`,
+                        gridTemplateColumns: `repeat(9, ${cellSize}px)`,
+                        gridTemplateRows: `repeat(9, ${cellSize}px)`,
                         padding: 4,
                     }}
                 >
@@ -308,8 +324,8 @@ export function Sudoku({ difficulty = 'medium', onComplete, onNewGame }: SudokuP
                     ${rowIndex % 3 === 2 && rowIndex < 8 ? 'border-b-2 border-b-muted' : ''}
                   `}
                                     style={{
-                                        width: CELL_SIZE,
-                                        height: CELL_SIZE,
+                                        width: cellSize,
+                                        height: cellSize,
                                     }}
                                 >
                                     {cell !== 0 ? (
