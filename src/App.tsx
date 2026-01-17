@@ -16,6 +16,7 @@ import { MazeSelection } from './pages/MazeSelection';
 import { MazePlay } from './pages/MazePlay';
 import { TiltCalibration } from './pages/TiltCalibration';
 import { MathNatureBackground } from './components/background/MathNatureBackground';
+import { Scratchpad } from './pages/Scratchpad';
 import { useEasterEggs } from './lib/useEasterEggs';
 
 // Check if we're on the DRock VIP subdomain
@@ -73,6 +74,9 @@ function App() {
         <Route path="/maze" element={<MazeSelection />} />
         <Route path="/maze/calibrate" element={<TiltCalibration />} />
         <Route path="/maze/play" element={<MazePlay />} />
+
+        {/* Hidden routes - unlisted, discoverable via headers */}
+        <Route path="/s" element={<Scratchpad />} />
       </Routes>
     </>
   );

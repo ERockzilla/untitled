@@ -45,16 +45,14 @@ looks under the couch cushions at someone else's house. We respect that.
   const projectSummary = `
 %c
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Made with ❤️, ☕, and questionable sleep schedules by ERock.
+Made with ❤️ by ERock.
 Version: 1.0.0 | Build: ${new Date().toISOString().split('T')[0]}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 
   const warningMessage = `
 %c⚠️ LEGAL DISCLAIMER: 
-If you're not DRock and you're reading this... well, now 
-you know how cool someone else's sister is. Jealous? 
-Thought so. 💅
+If you're not DRock and you're reading this... well, that's cool.
 `;
 
   const hiddenMessage = `
@@ -64,7 +62,7 @@ Thought so. 💅
     ║  • Type special words anywhere on the page        ║
     ║  • Click the logo multiple times                  ║
     ║  • Try the Konami Code                            ║
-    ║  • Check the HTTP headers (Network tab)           ║
+    ║  • Check the headers                              ║
     ║  • Look for hidden pixels                         ║
     ║  • Wait... what time is it?                       ║
     ║  • Did someone say "pride"?                       ║
@@ -95,11 +93,7 @@ Thought so. 💅
   console.log('%c📊 Quick Stats:', 'color: #a29bfe; font-weight: bold; font-size: 14px;');
   console.table({
     '🎂 Project': 'Happy Birthday LED Protocol',
-    '🎯 Purpose': 'Being the best sibling ever',
-    '🔥 Coolness Factor': 'Over 9000',
-    '💖 Love Level': 'Infinity',
-    '🥚 Easter Eggs': '12+ hidden throughout',
-    '☕ Coffee Consumed': '∞',
+    '🥚 Easter Eggs': 'hidden throughout',
   });
 
   console.log('%cNow go click around and enjoy! 🚀',
@@ -175,11 +169,6 @@ Directed by ................... ERock
 Produced by ................... ☕ & Late Nights
 Written by .................... React & TypeScript
 Special Thanks ................ DRock (the best sister)
-Music by ...................... Lo-fi beats to code to
-Catering ...................... DoorDash
-
-No bugs were harmed in the making of this website.
-(They were squashed mercilessly.)
 
 %c❤️ Thank you for playing! ❤️
     `, 'color: #ffe66d; font-size: 12px;', 'color: #ff6b9d; font-size: 14px;');
@@ -265,11 +254,11 @@ No bugs were harmed in the making of this website.
     console.log(`
 %c
     ❤️ ❤️   ❤️ ❤️
-  ❤️     ❤️     ❤️
-  ❤️ Made with love ❤️
-    ❤️  for DRock ❤️
-      ❤️       ❤️
-        ❤️   ❤️
+  ❤️     ❤️      ❤️
+  ❤️             ❤️
+    ❤️          ❤️
+      ❤️      ❤️
+        ❤️  ❤️
           ❤️
 %c
 This project exists because family matters.
