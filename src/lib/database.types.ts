@@ -1,4 +1,5 @@
 // Database types for Supabase - matches the schema in the plan
+// Updated for @supabase/supabase-js v2.90+
 
 export interface Database {
     public: {
@@ -22,6 +23,7 @@ export interface Database {
                     display_name?: string | null;
                     created_at?: string;
                 };
+                Relationships: [];
             };
             game_results: {
                 Row: {
@@ -60,6 +62,15 @@ export interface Database {
                     daily_challenge?: boolean;
                     daily_date?: string | null;
                 };
+                Relationships: [
+                    {
+                        foreignKeyName: "game_results_user_id_fkey";
+                        columns: ["user_id"];
+                        isOneToOne: false;
+                        referencedRelation: "profiles";
+                        referencedColumns: ["id"];
+                    }
+                ];
             };
         };
         Views: {
@@ -72,6 +83,7 @@ export interface Database {
                     username: string | null;
                     display_name: string | null;
                 };
+                Relationships: [];
             };
             daily_leaderboard: {
                 Row: {
@@ -80,11 +92,34 @@ export interface Database {
                     display_name: string | null;
                     game_type: string;
                     attempts: number | null;
+                    score: number | null;
                     played_at: string;
                     rank: number;
                 };
+                Relationships: [];
+            };
+            alltime_leaderboard: {
+                Row: {
+                    user_id: string;
+                    username: string | null;
+                    display_name: string | null;
+                    game_type: string;
+                    total_wins: number;
+                    total_played: number;
+                    win_rate: number;
+                    rank: number;
+                };
+                Relationships: [];
             };
         };
+        Functions: {
+            get_user_streak: {
+                Args: { p_user_id: string; p_game_type: string };
+                Returns: { current_streak: number; max_streak: number }[];
+            };
+        };
+        Enums: Record<string, never>;
+        CompositeTypes: Record<string, never>;
     };
 }
 

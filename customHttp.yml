@@ -79,6 +79,28 @@ customHeaders:
         value: The cake is a lie, but these puzzles are real.
       - key: X-Security-Level
         value: Maximum. We take this seriously.
+      - key: X-Greeting
+        value: Hello, fellow code explorer! Wave in the console 👋
+      - key: X-Coffee-Status
+        value: Needs refill ☕ (always)
+      - key: X-Easter-Eggs
+        value: 12+ hidden. Open console and type help() to begin.
+      - key: X-Hiring
+        value: Know React? We should chat. (just kidding... unless?)
+      - key: X-Music
+        value: Currently vibing to Lo-fi beats
+      - key: X-Bug-Bounty
+        value: Find a bug? Tell us! We'll give you internet points.
+      - key: X-Time-Spent
+        value: More hours than we care to admit
+      - key: X-Stack
+        value: React + TypeScript + Vite + Three.js + Supabase + ❤️
+      - key: X-Joke
+        value: Why do programmers prefer dark mode? Light attracts bugs.
+      - key: X-Quote
+        value: "Any sufficiently advanced technology is indistinguishable from magic." - Arthur C. Clarke
+      - key: X-Cat-Fact
+        value: A group of cats is called a clowder. Now you know.
 
   - pattern: '*.js'
     headers:

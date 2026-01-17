@@ -51,7 +51,7 @@ export function Leaderboard({ gameType, onClose }: LeaderboardProps) {
 
             try {
                 // Fetch daily leaderboard
-                const { data: daily, error: dailyError } = await supabase
+                const { data: daily, error: dailyError } = await supabase!
                     .from('daily_leaderboard')
                     .select('*')
                     .eq('game_type', gameType)
@@ -62,7 +62,7 @@ export function Leaderboard({ gameType, onClose }: LeaderboardProps) {
                 setDailyEntries(daily || []);
 
                 // Fetch all-time leaderboard
-                const { data: allTime, error: allTimeError } = await supabase
+                const { data: allTime, error: allTimeError } = await supabase!
                     .from('alltime_leaderboard')
                     .select('*')
                     .eq('game_type', gameType)
@@ -82,7 +82,7 @@ export function Leaderboard({ gameType, onClose }: LeaderboardProps) {
         fetchLeaderboards();
 
         // Set up real-time subscription for daily leaderboard updates
-        const channel = supabase
+        const channel = supabase!
             .channel('leaderboard-changes')
             .on(
                 'postgres_changes',
@@ -100,7 +100,7 @@ export function Leaderboard({ gameType, onClose }: LeaderboardProps) {
             .subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase!.removeChannel(channel);
         };
     }, [gameType]);
 
@@ -171,21 +171,19 @@ export function Leaderboard({ gameType, onClose }: LeaderboardProps) {
                 <div className="flex border-b border-elevated">
                     <button
                         onClick={() => setActiveTab('daily')}
-                        className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                            activeTab === 'daily'
+                        className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'daily'
                                 ? 'text-accent border-b-2 border-accent'
                                 : 'text-subtle hover:text-text'
-                        }`}
+                            }`}
                     >
                         Today's Challenge
                     </button>
                     <button
                         onClick={() => setActiveTab('alltime')}
-                        className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                            activeTab === 'alltime'
+                        className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'alltime'
                                 ? 'text-accent border-b-2 border-accent'
                                 : 'text-subtle hover:text-text'
-                        }`}
+                            }`}
                     >
                         All Time
                     </button>
@@ -219,11 +217,10 @@ export function Leaderboard({ gameType, onClose }: LeaderboardProps) {
                                 {dailyEntries.map((entry) => (
                                     <div
                                         key={entry.user_id}
-                                        className={`flex items-center gap-3 p-3 rounded-lg ${
-                                            user?.id === entry.user_id
+                                        className={`flex items-center gap-3 p-3 rounded-lg ${user?.id === entry.user_id
                                                 ? 'bg-accent/10 border border-accent/30'
                                                 : 'bg-elevated'
-                                        }`}
+                                            }`}
                                     >
                                         <div className={`w-8 text-center ${getRankStyle(entry.rank)}`}>
                                             {getRankEmoji(entry.rank) || `#${entry.rank}`}
@@ -262,11 +259,10 @@ export function Leaderboard({ gameType, onClose }: LeaderboardProps) {
                                 {allTimeEntries.map((entry) => (
                                     <div
                                         key={entry.user_id}
-                                        className={`flex items-center gap-3 p-3 rounded-lg ${
-                                            user?.id === entry.user_id
+                                        className={`flex items-center gap-3 p-3 rounded-lg ${user?.id === entry.user_id
                                                 ? 'bg-accent/10 border border-accent/30'
                                                 : 'bg-elevated'
-                                        }`}
+                                            }`}
                                     >
                                         <div className={`w-8 text-center ${getRankStyle(entry.rank)}`}>
                                             {getRankEmoji(entry.rank) || `#${entry.rank}`}

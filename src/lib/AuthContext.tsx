@@ -13,7 +13,7 @@ interface AuthContextType {
     signUp: (email: string, password: string, displayName?: string) => Promise<{ error: AuthError | null }>;
     signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
     signOut: () => Promise<void>;
-    updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>;
+    updateProfile: (updates: Partial<Pick<Profile, 'username' | 'display_name'>>) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Update profile
     const updateProfile = useCallback(async (
-        updates: Partial<Profile>
+        updates: Partial<Pick<Profile, 'username' | 'display_name'>>
     ): Promise<{ error: Error | null }> => {
         if (!supabase || !user) {
             return { error: new Error('Not authenticated') };
@@ -143,12 +143,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .update(updates)
             .eq('id', user.id);
 
-        if (!error) {
-            setProfile(prev => prev ? { ...prev, ...updates } : null);
+        if (!error && profile) {
+            setProfile({ ...profile, ...updates });
         }
 
         return { error };
-    }, [user]);
+    }, [user, profile]);
 
     const value: AuthContextType = {
         user,

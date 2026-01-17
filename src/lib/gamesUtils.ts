@@ -148,7 +148,7 @@ export async function recordCloudResult(
         daily_date: options.isDaily ? today : null,
     };
 
-    const { error } = await supabase
+    const { error } = await supabase!
         .from('game_results')
         .insert(result);
 
@@ -166,7 +166,7 @@ export async function loadCloudStats(
         return { stats: null, error: new Error('Supabase not configured') };
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
         .from('game_results')
         .select('won, score, time_seconds')
         .eq('user_id', userId)
@@ -184,15 +184,17 @@ export async function loadCloudStats(
     }
 
     // Calculate stats from results
+    type GameResultRow = { won: boolean; score: number | null; time_seconds: number | null };
+    const results = data as GameResultRow[];
     const stats: GameStats = {
-        gamesPlayed: data.length,
-        gamesWon: data.filter(r => r.won).length,
-        bestScore: Math.max(...data.filter(r => r.score != null).map(r => r.score!), 0) || undefined,
-        bestTime: Math.min(...data.filter(r => r.won && r.time_seconds != null).map(r => r.time_seconds!)) || undefined,
+        gamesPlayed: results.length,
+        gamesWon: results.filter(r => r.won).length,
+        bestScore: Math.max(...results.filter(r => r.score != null).map(r => r.score!), 0) || undefined,
+        bestTime: Math.min(...results.filter(r => r.won && r.time_seconds != null).map(r => r.time_seconds!)) || undefined,
     };
 
     // Get streak info from the database function
-    const { data: streakData } = await supabase
+    const { data: streakData } = await supabase!
         .rpc('get_user_streak', { p_user_id: userId, p_game_type: gameId });
 
     if (streakData && streakData.length > 0) {
@@ -257,7 +259,7 @@ export async function migrateLocalToCloud(userId: string): Promise<{ error: Erro
             }
 
             if (results.length > 0) {
-                const { error } = await supabase
+                const { error } = await supabase!
                     .from('game_results')
                     .insert(results);
 
