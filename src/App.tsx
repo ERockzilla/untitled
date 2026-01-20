@@ -20,6 +20,7 @@ const WordSearchPage = lazy(() => import('./pages/WordSearchPage').then(m => ({ 
 const WordlePage = lazy(() => import('./pages/WordlePage').then(m => ({ default: m.WordlePage })));
 const MazeSelection = lazy(() => import('./pages/MazeSelection').then(m => ({ default: m.MazeSelection })));
 const MazePlay = lazy(() => import('./pages/MazePlay').then(m => ({ default: m.MazePlay })));
+const VoxelTetrisPage = lazy(() => import('./pages/VoxelTetrisPage').then(m => ({ default: m.VoxelTetrisPage })));
 const TiltCalibration = lazy(() => import('./pages/TiltCalibration').then(m => ({ default: m.TiltCalibration })));
 const Scratchpad = lazy(() => import('./pages/Scratchpad').then(m => ({ default: m.Scratchpad })));
 
@@ -79,6 +80,7 @@ function App() {
           <Route path="/games" element={<GamesHub />} />
           <Route path="/games/puzzles" element={<PuzzleGame />} />
           <Route path="/games/tetris" element={<TetrisPage />} />
+          <Route path="/games/voxel-tetris" element={<VoxelTetrisPage />} />
           <Route path="/games/sudoku" element={<SudokuPage />} />
           <Route path="/games/word-search" element={<WordSearchPage />} />
           <Route path="/games/wordle" element={<WordlePage />} />

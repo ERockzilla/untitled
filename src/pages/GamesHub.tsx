@@ -271,6 +271,26 @@ export function GamesHub() {
             color: '#64748b',
             stats: { played: 0, won: 0 },
         },
+        {
+            to: '/games/voxel-tetris',
+            title: 'VoxTris 3D',
+            description: '3D Tetris in a 6x6x14 voxel well. Rotate dimensions!',
+            icon: (
+                <div className="relative w-12 h-12">
+                    {/* 3D Cube Icon */}
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
+                        <path d="M24 4L8 12V36L24 44L40 36V12L24 4Z" fill="none" className="stroke-current" />
+                        <path d="M24 4V20M24 44V28M40 12L24 20L8 12M40 36L24 28L8 36" className="stroke-current opacity-60" />
+                        {/* Inner falling cube */}
+                        <g className="animate-tetris-fall">
+                            <path d="M24 14L18 17V23L24 26L30 23V17L24 14Z" fill="currentColor" opacity="0.8" />
+                        </g>
+                    </svg>
+                </div>
+            ),
+            color: '#8b5cf6',
+            stats: { played: 0, won: 0 }, // TODO: Persist stats for VoxTris
+        },
     ];
 
     // Calculate total stats
