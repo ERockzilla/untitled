@@ -184,6 +184,13 @@ export function Wordle({ mode = 'random', onComplete }: WordleProps) {
     // Physical keyboard
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Security: Ignore keyboard events when focus is in input fields
+            // This prevents password/form input from leaking to the game board
+            if (e.target instanceof HTMLInputElement ||
+                e.target instanceof HTMLTextAreaElement ||
+                (e.target instanceof HTMLElement && e.target.isContentEditable)) {
+                return;
+            }
             if (e.metaKey || e.ctrlKey) return;
             handleKey(e.key.toUpperCase());
         };
@@ -334,8 +341,8 @@ export function Wordle({ mode = 'random', onComplete }: WordleProps) {
             <button
                 onClick={toggleColorBlind}
                 className={`mt-4 px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors ${colorBlindMode
-                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
-                        : 'bg-elevated text-subtle hover:bg-muted'
+                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
+                    : 'bg-elevated text-subtle hover:bg-muted'
                     }`}
             >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

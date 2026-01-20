@@ -208,3 +208,111 @@ body.rainbow-mode {
 .animate-ghost-pulse {
   animation: ghost-pulse 1s ease-in-out infinite;
 }
+
+/* Game Card Icon Animations */
+@keyframes tetris-fall {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tile-flip {
+  0% {
+    transform: rotateX(90deg);
+    opacity: 0;
+  }
+
+  100% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes word-highlight {
+
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+
+  25% {
+    transform: translateY(9px);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: translateY(18px);
+    opacity: 0.3;
+  }
+
+  75% {
+    transform: translateY(9px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes maze-run {
+  0% {
+    cx: 8;
+    cy: 8;
+  }
+
+  25% {
+    cx: 8;
+    cy: 16;
+  }
+
+  50% {
+    cx: 24;
+    cy: 16;
+  }
+
+  75% {
+    cx: 24;
+    cy: 32;
+  }
+
+  100% {
+    cx: 40;
+    cy: 40;
+  }
+}
+
+.animate-tetris-fall {
+  animation: tetris-fall 1.5s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+.animate-tile-flip {
+  animation: tile-flip 0.5s ease-out forwards;
+}
+
+.animate-word-highlight {
+  animation: word-highlight 2s ease-in-out infinite;
+}
+
+.animate-maze-run {
+  animation: maze-run 3s ease-in-out infinite;
+}

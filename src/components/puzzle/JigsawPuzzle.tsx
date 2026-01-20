@@ -347,7 +347,7 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
         return null; // No available spot (shouldn't happen in practice)
     }, [pieces, rows, cols]);
 
-    // Unified drop handler
+    // Unified drop handler with improved mobile UX
     const handleDrop = useCallback((clientX: number, clientY: number) => {
         if (draggedPiece === null || !containerRef.current) return;
 
@@ -367,10 +367,13 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
         const dropX = clientX - boardRect.left - tabOverflow;
         const dropY = clientY - boardRect.top - tabOverflow;
 
-        // Check if drop is within the board area
-        if (dropX >= -tabOverflow && dropX < boardWidth + tabOverflow &&
-            dropY >= -tabOverflow && dropY < boardHeight + tabOverflow) {
+        // Expanded tolerance for mobile - accept drops slightly outside board
+        const tolerance = Math.max(displayPieceWidth, displayPieceHeight) * 0.5;
+        const isNearBoard = dropX >= -tolerance && dropX < boardWidth + tolerance &&
+            dropY >= -tolerance && dropY < boardHeight + tolerance;
 
+        if (isNearBoard) {
+            // Calculate target cell with expanded hit area
             const targetCol = Math.floor((dropX + displayPieceWidth / 2) / displayPieceWidth);
             const targetRow = Math.floor((dropY + displayPieceHeight / 2) / displayPieceHeight);
 
@@ -392,12 +395,10 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                 if (nearestSpot) {
                     finalRow = nearestSpot.row;
                     finalCol = nearestSpot.col;
-                    // Check if this new spot has an unlocked piece to swap
                     pieceToSwap = pieces.find(
                         p => p.id !== piece.id && p.isPlaced && p.currentRow === finalRow && p.currentCol === finalCol
                     );
                 } else {
-                    // No available spot found, don't change anything
                     setDraggedPiece(null);
                     return;
                 }
@@ -410,9 +411,8 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                 piece.rotation === 0;
 
             // Place the piece (swap if there's an unlocked piece there)
-            const newPieces = pieces.map(p => {
+            let newPieces = pieces.map(p => {
                 if (p.id === draggedPiece) {
-                    // Place the dragged piece at final position
                     return {
                         ...p,
                         isPlaced: true,
@@ -422,7 +422,6 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                     };
                 }
                 if (pieceToSwap && !pieceToSwap.isLocked && p.id === pieceToSwap.id) {
-                    // Send the existing unlocked piece back to tray (swap)
                     return {
                         ...p,
                         isPlaced: false,
@@ -432,6 +431,21 @@ export function JigsawPuzzle({ imageUrl, config, onComplete }: JigsawPuzzleProps
                 }
                 return p;
             });
+
+            // Auto-complete check: If all pieces are placed and in correct position+rotation,
+            // automatically lock them all (solves the "extra tap" issue on mobile)
+            const allPlaced = newPieces.every(p => p.isPlaced);
+            if (allPlaced) {
+                const allCorrect = newPieces.every(p =>
+                    p.currentRow === p.correctRow &&
+                    p.currentCol === p.correctCol &&
+                    p.rotation === 0
+                );
+                if (allCorrect) {
+                    newPieces = newPieces.map(p => ({ ...p, isLocked: true }));
+                }
+            }
+
             setPieces(newPieces);
         } else {
             // Dropped outside board - return piece to tray

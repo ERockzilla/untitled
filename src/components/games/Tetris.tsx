@@ -72,7 +72,7 @@ interface TetrisProps {
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
 const DESKTOP_CELL_SIZE = 28;
-const MOBILE_CELL_SIZE = 18;
+const MOBILE_CELL_SIZE = 24; // Increased from 18 for better mobile UX
 
 // Create empty board
 function createBoard(): (string | null)[][] {
@@ -503,225 +503,266 @@ export function Tetris({ onGameOver, onScoreChange }: TetrisProps) {
     };
 
     return (
-        <div className="flex gap-4 sm:gap-6 items-start justify-center">
-            {/* Hold piece */}
-            <div className="hidden sm:block">
-                <div className="text-xs text-subtle mb-2 text-center">HOLD</div>
-                <div className="w-20 h-20 bg-elevated rounded-lg flex items-center justify-center border border-muted">
-                    {renderMiniPiece(heldPiece)}
-                </div>
-                <div className="text-xs text-subtle mt-1 text-center opacity-50">Press C</div>
-            </div>
-
-            {/* Main game board */}
-            <div className="relative">
-                <div
-                    ref={gameAreaRef}
-                    className="relative bg-void rounded-lg overflow-hidden border-2 border-elevated touch-none"
-                    style={{
-                        width: BOARD_WIDTH * CELL_SIZE,
-                        height: BOARD_HEIGHT * CELL_SIZE,
-                    }}
-                >
-                    {/* Grid background */}
-                    <div className="absolute inset-0 grid"
-                        style={{
-                            gridTemplateColumns: `repeat(${BOARD_WIDTH}, ${CELL_SIZE}px)`,
-                            gridTemplateRows: `repeat(${BOARD_HEIGHT}, ${CELL_SIZE}px)`,
-                        }}
-                    >
-                        {Array(BOARD_WIDTH * BOARD_HEIGHT).fill(null).map((_, i) => (
-                            <div
-                                key={i}
-                                className="border border-white/5"
-                            />
-                        ))}
+        <div className={`flex flex-col items-center ${isMobile ? 'gap-3' : 'gap-0'}`}>
+            {/* Mobile: Horizontal stats bar above game */}
+            {isMobile && (
+                <div className="flex gap-2 w-full justify-center mb-2">
+                    <div className="bg-elevated rounded-lg px-3 py-2 border border-muted text-center min-w-[60px]">
+                        <div className="text-[10px] text-subtle">NEXT</div>
+                        <div className="flex justify-center">{renderMiniPiece(nextPiece, 10)}</div>
                     </div>
-
-                    {/* Placed pieces */}
-                    {board.map((row, y) =>
-                        row.map((cell, x) =>
-                            cell && (
-                                <div
-                                    key={`${x}-${y}`}
-                                    className="absolute rounded-sm"
-                                    style={{
-                                        left: x * CELL_SIZE + 2,
-                                        top: y * CELL_SIZE + 2,
-                                        width: CELL_SIZE - 4,
-                                        height: CELL_SIZE - 4,
-                                        backgroundColor: cell,
-                                        boxShadow: `inset 0 0 0 2px rgba(255,255,255,0.3), 0 0 10px ${cell}40`,
-                                    }}
-                                />
-                            )
-                        )
-                    )}
-
-                    {/* Ghost piece - enhanced visibility */}
-                    {isPlaying && !gameOver && currentPiece.shape.map((row, y) =>
-                        row.map((cell, x) =>
-                            cell ? (
-                                <div
-                                    key={`ghost-${x}-${y}`}
-                                    className="absolute rounded-sm border-2 border-dashed animate-ghost-pulse"
-                                    style={{
-                                        left: (currentPiece.x + x) * CELL_SIZE + 2,
-                                        top: (ghostY + y) * CELL_SIZE + 2,
-                                        width: CELL_SIZE - 4,
-                                        height: CELL_SIZE - 4,
-                                        borderColor: currentPiece.color,
-                                        backgroundColor: `${currentPiece.color}15`,
-                                    }}
-                                />
-                            ) : null
-                        )
-                    )}
-
-                    {/* Current piece */}
-                    {isPlaying && !gameOver && currentPiece.shape.map((row, y) =>
-                        row.map((cell, x) =>
-                            cell ? (
-                                <div
-                                    key={`current-${x}-${y}`}
-                                    className="absolute rounded-sm transition-all duration-50"
-                                    style={{
-                                        left: (currentPiece.x + x) * CELL_SIZE + 2,
-                                        top: (currentPiece.y + y) * CELL_SIZE + 2,
-                                        width: CELL_SIZE - 4,
-                                        height: CELL_SIZE - 4,
-                                        backgroundColor: currentPiece.color,
-                                        boxShadow: `inset 0 0 0 2px rgba(255,255,255,0.3), 0 0 15px ${currentPiece.color}60`,
-                                    }}
-                                />
-                            ) : null
-                        )
-                    )}
-
-                    {/* Start overlay */}
-                    {!isPlaying && !gameOver && (
-                        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-4">
-                            <div className="text-2xl font-bold text-white">TETRIS</div>
-                            <button
-                                onClick={startGame}
-                                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg text-white font-bold hover:scale-105 transition-transform"
-                            >
-                                Start Game
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Paused overlay */}
-                    {isPaused && (
-                        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-4">
-                            <div className="text-2xl font-bold text-white">PAUSED</div>
-                            <button
-                                onClick={() => setIsPaused(false)}
-                                className="px-6 py-3 bg-cyan-500 rounded-lg text-white font-bold hover:bg-cyan-400 transition-colors"
-                            >
-                                Resume
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Game over overlay */}
-                    {gameOver && (
-                        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-4">
-                            <div className="text-2xl font-bold text-red-500">GAME OVER</div>
-                            <div className="text-white text-center">
-                                <div>Score: {score.toLocaleString()}</div>
-                                <div>Lines: {lines}</div>
-                                <div>Level: {level}</div>
-                            </div>
-                            <button
-                                onClick={startGame}
-                                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg text-white font-bold hover:scale-105 transition-transform"
-                            >
-                                Play Again
-                            </button>
-                        </div>
-                    )}
+                    <div className="bg-elevated rounded-lg px-3 py-2 border border-muted text-center min-w-[70px]">
+                        <div className="text-[10px] text-subtle">SCORE</div>
+                        <div className="text-sm font-bold text-accent tabular-nums">{score.toLocaleString()}</div>
+                    </div>
+                    <div className="bg-elevated rounded-lg px-3 py-2 border border-muted text-center">
+                        <div className="text-[10px] text-subtle">LINES</div>
+                        <div className="text-sm font-bold text-secondary tabular-nums">{lines}</div>
+                    </div>
+                    <div className="bg-elevated rounded-lg px-3 py-2 border border-muted text-center">
+                        <div className="text-[10px] text-subtle">LVL</div>
+                        <div className="text-sm font-bold text-tertiary tabular-nums">{level}</div>
+                    </div>
                 </div>
-            </div>
+            )}
 
-            {/* Right panel */}
-            <div className="flex flex-col gap-4">
-                {/* Next piece */}
-                <div>
-                    <div className="text-xs text-subtle mb-2 text-center">NEXT</div>
+            {/* Desktop layout with side panels */}
+            <div className={`flex ${isMobile ? 'flex-col items-center' : 'gap-6 items-start justify-center'}`}>
+                {/* Hold piece - desktop only */}
+                <div className="hidden sm:block">
+                    <div className="text-xs text-subtle mb-2 text-center">HOLD</div>
                     <div className="w-20 h-20 bg-elevated rounded-lg flex items-center justify-center border border-muted">
-                        {renderMiniPiece(nextPiece)}
+                        {renderMiniPiece(heldPiece)}
+                    </div>
+                    <div className="text-xs text-subtle mt-1 text-center opacity-50">Press C</div>
+                </div>
+
+                {/* Main game board */}
+                <div className="relative">
+                    <div
+                        ref={gameAreaRef}
+                        className="relative bg-void rounded-lg overflow-hidden border-2 border-elevated touch-none"
+                        style={{
+                            width: BOARD_WIDTH * CELL_SIZE,
+                            height: BOARD_HEIGHT * CELL_SIZE,
+                        }}
+                    >
+                        {/* Grid background */}
+                        <div className="absolute inset-0 grid"
+                            style={{
+                                gridTemplateColumns: `repeat(${BOARD_WIDTH}, ${CELL_SIZE}px)`,
+                                gridTemplateRows: `repeat(${BOARD_HEIGHT}, ${CELL_SIZE}px)`,
+                            }}
+                        >
+                            {Array(BOARD_WIDTH * BOARD_HEIGHT).fill(null).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="border border-white/5"
+                                />
+                            ))}
+                        </div>
+
+                        {/* Placed pieces */}
+                        {board.map((row, y) =>
+                            row.map((cell, x) =>
+                                cell && (
+                                    <div
+                                        key={`${x}-${y}`}
+                                        className="absolute rounded-sm"
+                                        style={{
+                                            left: x * CELL_SIZE + 2,
+                                            top: y * CELL_SIZE + 2,
+                                            width: CELL_SIZE - 4,
+                                            height: CELL_SIZE - 4,
+                                            backgroundColor: cell,
+                                            boxShadow: `inset 0 0 0 2px rgba(255,255,255,0.3), 0 0 10px ${cell}40`,
+                                        }}
+                                    />
+                                )
+                            )
+                        )}
+
+                        {/* Ghost piece - enhanced visibility */}
+                        {isPlaying && !gameOver && currentPiece.shape.map((row, y) =>
+                            row.map((cell, x) =>
+                                cell ? (
+                                    <div
+                                        key={`ghost-${x}-${y}`}
+                                        className="absolute rounded-sm border-2 border-dashed animate-ghost-pulse"
+                                        style={{
+                                            left: (currentPiece.x + x) * CELL_SIZE + 2,
+                                            top: (ghostY + y) * CELL_SIZE + 2,
+                                            width: CELL_SIZE - 4,
+                                            height: CELL_SIZE - 4,
+                                            borderColor: currentPiece.color,
+                                            backgroundColor: `${currentPiece.color}15`,
+                                        }}
+                                    />
+                                ) : null
+                            )
+                        )}
+
+                        {/* Current piece */}
+                        {isPlaying && !gameOver && currentPiece.shape.map((row, y) =>
+                            row.map((cell, x) =>
+                                cell ? (
+                                    <div
+                                        key={`current-${x}-${y}`}
+                                        className="absolute rounded-sm transition-all duration-50"
+                                        style={{
+                                            left: (currentPiece.x + x) * CELL_SIZE + 2,
+                                            top: (currentPiece.y + y) * CELL_SIZE + 2,
+                                            width: CELL_SIZE - 4,
+                                            height: CELL_SIZE - 4,
+                                            backgroundColor: currentPiece.color,
+                                            boxShadow: `inset 0 0 0 2px rgba(255,255,255,0.3), 0 0 15px ${currentPiece.color}60`,
+                                        }}
+                                    />
+                                ) : null
+                            )
+                        )}
+
+                        {/* Start overlay */}
+                        {!isPlaying && !gameOver && (
+                            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-4">
+                                <div className="text-2xl font-bold text-white">TETRIS</div>
+                                <button
+                                    onClick={startGame}
+                                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg text-white font-bold hover:scale-105 transition-transform"
+                                >
+                                    Start Game
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Paused overlay */}
+                        {isPaused && (
+                            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-4">
+                                <div className="text-2xl font-bold text-white">PAUSED</div>
+                                <button
+                                    onClick={() => setIsPaused(false)}
+                                    className="px-6 py-3 bg-cyan-500 rounded-lg text-white font-bold hover:bg-cyan-400 transition-colors"
+                                >
+                                    Resume
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Game over overlay */}
+                        {gameOver && (
+                            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-4">
+                                <div className="text-2xl font-bold text-red-500">GAME OVER</div>
+                                <div className="text-white text-center">
+                                    <div>Score: {score.toLocaleString()}</div>
+                                    <div>Lines: {lines}</div>
+                                    <div>Level: {level}</div>
+                                </div>
+                                <button
+                                    onClick={startGame}
+                                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg text-white font-bold hover:scale-105 transition-transform"
+                                >
+                                    Play Again
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Score */}
-                <div className="bg-elevated rounded-lg p-3 border border-muted">
-                    <div className="text-xs text-subtle">SCORE</div>
-                    <div className="text-xl font-bold text-accent tabular-nums">
-                        {score.toLocaleString()}
+                {/* Right panel - desktop only */}
+                <div className="hidden sm:flex flex-col gap-4">
+                    {/* Next piece */}
+                    <div>
+                        <div className="text-xs text-subtle mb-2 text-center">NEXT</div>
+                        <div className="w-20 h-20 bg-elevated rounded-lg flex items-center justify-center border border-muted">
+                            {renderMiniPiece(nextPiece)}
+                        </div>
                     </div>
+
+                    {/* Score */}
+                    <div className="bg-elevated rounded-lg p-3 border border-muted">
+                        <div className="text-xs text-subtle">SCORE</div>
+                        <div className="text-xl font-bold text-accent tabular-nums">
+                            {score.toLocaleString()}
+                        </div>
+                    </div>
+
+                    {/* Lines */}
+                    <div className="bg-elevated rounded-lg p-3 border border-muted">
+                        <div className="text-xs text-subtle">LINES</div>
+                        <div className="text-lg font-bold text-secondary tabular-nums">{lines}</div>
+                    </div>
+
+                    {/* Level */}
+                    <div className="bg-elevated rounded-lg p-3 border border-muted">
+                        <div className="text-xs text-subtle">LEVEL</div>
+                        <div className="text-lg font-bold text-tertiary tabular-nums">{level}</div>
+                    </div>
+
+                    {/* Pause button */}
+                    {isPlaying && !gameOver && (
+                        <button
+                            onClick={() => setIsPaused(p => !p)}
+                            className="px-4 py-2 bg-elevated hover:bg-muted rounded-lg text-sm text-text transition-colors"
+                        >
+                            {isPaused ? 'Resume' : 'Pause'}
+                        </button>
+                    )}
                 </div>
-
-                {/* Lines */}
-                <div className="bg-elevated rounded-lg p-3 border border-muted">
-                    <div className="text-xs text-subtle">LINES</div>
-                    <div className="text-lg font-bold text-secondary tabular-nums">{lines}</div>
-                </div>
-
-                {/* Level */}
-                <div className="bg-elevated rounded-lg p-3 border border-muted">
-                    <div className="text-xs text-subtle">LEVEL</div>
-                    <div className="text-lg font-bold text-tertiary tabular-nums">{level}</div>
-                </div>
-
-                {/* Pause button */}
-                {isPlaying && !gameOver && (
-                    <button
-                        onClick={() => setIsPaused(p => !p)}
-                        className="px-4 py-2 bg-elevated hover:bg-muted rounded-lg text-sm text-text transition-colors"
-                    >
-                        {isPaused ? 'Resume' : 'Pause'}
-                    </button>
-                )}
-
-                {/* Mobile hold button */}
-                {isMobile && isPlaying && !gameOver && !isPaused && (
-                    <button
-                        onClick={holdPiece}
-                        className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg text-sm text-purple-400 transition-colors border border-purple-500/30"
-                    >
-                        Hold
-                    </button>
-                )}
             </div>
 
-            {/* Mobile Touch Controls */}
+            {/* Mobile: Swipe hint + Controls below game board */}
             {isMobile && isPlaying && !gameOver && !isPaused && (
-                <div className="mt-4 w-full" ref={boardContainerRef}>
-                    <TouchControls
-                        onMove={(direction) => {
-                            switch (direction) {
-                                case 'left':
-                                    movePiece(-1, 0);
-                                    break;
-                                case 'right':
-                                    movePiece(1, 0);
-                                    break;
-                                case 'down':
-                                    movePiece(0, 1);
-                                    setScore(s => s + 1);
-                                    break;
-                                case 'up':
-                                    rotatePiece();
-                                    break;
-                            }
-                        }}
-                        onAction1={rotatePiece}
-                        action1Label="↻"
-                        onAction2={hardDrop}
-                        action2Label="⬇"
-                        size="medium"
-                    />
+                <div className="w-full flex flex-col items-center gap-2">
+                    {/* Swipe instructions */}
+                    <div className="text-xs text-subtle text-center bg-elevated/50 px-3 py-1.5 rounded-full">
+                        👆 Tap to rotate • ←→ Swipe to move • ↓ Swipe down to drop
+                    </div>
+
+                    {/* Action buttons row */}
+                    <div className="flex gap-3 justify-center">
+                        <button
+                            onClick={holdPiece}
+                            className="px-4 py-3 bg-purple-500/20 hover:bg-purple-500/30 rounded-xl text-purple-400 transition-colors border border-purple-500/30 flex items-center gap-2"
+                        >
+                            <span className="text-lg">📦</span>
+                            <span className="text-sm font-medium">Hold</span>
+                        </button>
+                        <button
+                            onClick={() => setIsPaused(true)}
+                            className="px-4 py-3 bg-elevated hover:bg-muted rounded-xl text-text transition-colors border border-muted flex items-center gap-2"
+                        >
+                            <span className="text-lg">⏸️</span>
+                            <span className="text-sm font-medium">Pause</span>
+                        </button>
+                    </div>
+
+                    {/* Touch D-pad controls */}
+                    <div ref={boardContainerRef} className="mt-2">
+                        <TouchControls
+                            onMove={(direction) => {
+                                switch (direction) {
+                                    case 'left':
+                                        movePiece(-1, 0);
+                                        break;
+                                    case 'right':
+                                        movePiece(1, 0);
+                                        break;
+                                    case 'down':
+                                        movePiece(0, 1);
+                                        setScore(s => s + 1);
+                                        break;
+                                    case 'up':
+                                        rotatePiece();
+                                        break;
+                                }
+                            }}
+                            onAction1={rotatePiece}
+                            action1Label="↻"
+                            onAction2={hardDrop}
+                            action2Label="⬇"
+                            size="large"
+                        />
+                    </div>
                 </div>
             )}
         </div>

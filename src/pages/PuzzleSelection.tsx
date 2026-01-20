@@ -20,7 +20,7 @@ export function PuzzleSelection() {
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
-    const [mode, setMode] = useState<PuzzleMode>('sliding');
+    const [mode, setMode] = useState<PuzzleMode>('jigsaw');
     const [difficulty, setDifficulty] = useState<Difficulty>('medium');
     const [progress, setProgress] = useState<PuzzleProgress>({});
 

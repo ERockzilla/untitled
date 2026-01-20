@@ -1,19 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const DEFAULT_TEXT = `╔══════════════════════════════════════════════════════════════════╗
-║                         SCRATCHPAD                               ║
-║                                                                  ║
-║  You found the hidden notepad.                                   ║
-║                                                                  ║
-║  This space persists in your browser's localStorage.             ║
-║  Write anything. Notes, code, thoughts, n^e thing.               ║
-║                                                                  ║
-║  Ctrl+S saves. Auto-saves on blur.                               ║
-║  No one else can see this.                                       ║
-║                                                                  ║
-╚══════════════════════════════════════════════════════════════════╝
-
-`;
+// Empty default allows immediate typing with placeholder visible
+const DEFAULT_TEXT = '';
 
 const STORAGE_KEY = 'scratchpad_content';
 const STORAGE_TIMESTAMP_KEY = 'scratchpad_last_saved';

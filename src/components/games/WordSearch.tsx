@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     WORD_CATEGORIES,
     getRandomWords,
@@ -39,7 +39,9 @@ const DIRECTIONS: [number, number][] = [
     [1, -1],  // diagonal down-left
 ];
 
-const CELL_SIZE = 36;
+// Responsive cell size - calculated in component based on viewport
+const BASE_CELL_SIZE = 36;
+const MIN_CELL_SIZE = 28;
 
 // Generate empty grid
 function createEmptyGrid(size: number): string[][] {
@@ -172,7 +174,7 @@ function checkSelection(
 
 export function WordSearch({
     category: initialCategory,
-    gridSize = 12,
+    gridSize: propGridSize = 12,
     wordCount = 8,
     onComplete,
 }: WordSearchProps) {
@@ -186,6 +188,31 @@ export function WordSearch({
     const [selection, setSelection] = useState<Selection | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
+    const [containerWidth, setContainerWidth] = useState(400);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Responsive grid size - smaller on mobile
+    const isMobile = containerWidth < 400;
+    const gridSize = isMobile ? Math.min(propGridSize, 10) : propGridSize;
+
+    // Calculate responsive cell size
+    const cellSize = useMemo(() => {
+        const maxGridWidth = containerWidth - 16; // padding
+        const calculatedSize = Math.floor(maxGridWidth / gridSize);
+        return Math.max(MIN_CELL_SIZE, Math.min(BASE_CELL_SIZE, calculatedSize));
+    }, [containerWidth, gridSize]);
+
+    // Track container width for responsive sizing
+    useEffect(() => {
+        const updateWidth = () => {
+            if (containerRef.current) {
+                setContainerWidth(containerRef.current.offsetWidth);
+            }
+        };
+        updateWidth();
+        window.addEventListener('resize', updateWidth);
+        return () => window.removeEventListener('resize', updateWidth);
+    }, []);
 
     // Generate new puzzle
     const newGame = useCallback((cat: WordCategory) => {
@@ -345,12 +372,12 @@ export function WordSearch({
             </div>
 
             {/* Grid */}
-            <div className="order-1 lg:order-2">
+            <div className="order-1 lg:order-2" ref={containerRef}>
                 <div
                     ref={gridRef}
-                    className="grid gap-0.5 p-2 bg-elevated rounded-lg select-none touch-none"
+                    className="grid gap-0.5 p-2 bg-elevated rounded-lg select-none touch-none mx-auto"
                     style={{
-                        gridTemplateColumns: `repeat(${gridSize}, ${CELL_SIZE}px)`,
+                        gridTemplateColumns: `repeat(${gridSize}, ${cellSize}px)`,
                     }}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
@@ -379,8 +406,8 @@ export function WordSearch({
                     ${!isSelected && !isFound ? 'bg-surface text-text hover:bg-muted' : ''}
                   `}
                                     style={{
-                                        width: CELL_SIZE,
-                                        height: CELL_SIZE,
+                                        width: cellSize,
+                                        height: cellSize,
                                         touchAction: 'none',
                                     }}
                                 >

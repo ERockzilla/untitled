@@ -7,61 +7,110 @@ import { loadProgress } from '../lib/puzzleUtils';
 import { LoginModal } from '../components/auth/LoginModal';
 import { UserMenu } from '../components/auth/UserMenu';
 
-// Modern SVG icons for each game
+// Animated game icons - simulate gameplay on hover
 const GameIcons = {
     puzzles: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.087c0-.355.313-.687.75-.687.438 0 .75.332.75.687v.668c0 .11.045.216.125.295l.554.554c.08.08.186.125.295.125h.668c.355 0 .687.313.687.75s-.332.75-.687.75h-.668c-.11 0-.216.045-.295.125l-.554.554c-.08.08-.125.186-.125.295v.668c0 .355-.313.687-.75.687-.438 0-.75-.332-.75-.687v-.668c0-.11-.045-.216-.125-.295l-.554-.554c-.08-.08-.186-.125-.295-.125h-.668c-.355 0-.687-.313-.687-.75s.332-.75.687-.75h.668c.11 0 .216-.045.295-.125l.554-.554c.08-.08.125-.186.125-.295v-.668z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 4.5h6v6h-6zM13.5 4.5h6v6h-6zM4.5 13.5h6v6h-6zM13.5 13.5h6v6h-6z" />
-        </svg>
+        <div className="relative w-12 h-12">
+            {/* Animated jigsaw pieces sliding into place */}
+            <svg viewBox="0 0 48 48" fill="currentColor" className="w-full h-full">
+                <g className="animate-puzzle-piece-1">
+                    <rect x="4" y="4" width="18" height="18" rx="2" opacity="0.9" />
+                </g>
+                <g className="animate-puzzle-piece-2">
+                    <rect x="26" y="4" width="18" height="18" rx="2" opacity="0.7" />
+                </g>
+                <g className="animate-puzzle-piece-3">
+                    <rect x="4" y="26" width="18" height="18" rx="2" opacity="0.7" />
+                </g>
+                <g className="animate-puzzle-piece-4">
+                    <rect x="26" y="26" width="18" height="18" rx="2" opacity="0.9" />
+                </g>
+                {/* Puzzle tabs */}
+                <circle cx="24" cy="13" r="4" className="animate-pulse" />
+                <circle cx="13" cy="24" r="4" className="animate-pulse" style={{ animationDelay: '0.2s' }} />
+            </svg>
+        </div>
     ),
     tetris: (
-        <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8">
-            <rect x="4" y="4" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.9" />
-            <rect x="8" y="4" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.7" />
-            <rect x="12" y="4" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.9" />
-            <rect x="16" y="4" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.7" />
-            <rect x="4" y="8" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.6" />
-            <rect x="8" y="8" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.8" />
-            <rect x="12" y="8" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.6" />
-            <rect x="8" y="12" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.9" />
-            <rect x="12" y="12" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.7" />
-            <rect x="8" y="16" width="4" height="4" rx="0.5" fill="currentColor" opacity="0.5" />
-        </svg>
+        <div className="relative w-12 h-12">
+            {/* Animated falling blocks */}
+            <svg viewBox="0 0 48 48" fill="currentColor" className="w-full h-full">
+                <rect x="8" y="36" width="8" height="8" rx="1" opacity="0.9" />
+                <rect x="16" y="36" width="8" height="8" rx="1" opacity="0.7" />
+                <rect x="16" y="28" width="8" height="8" rx="1" opacity="0.8" />
+                <rect x="24" y="36" width="8" height="8" rx="1" opacity="0.6" />
+                <rect x="32" y="36" width="8" height="8" rx="1" opacity="0.9" />
+                {/* Falling T-piece */}
+                <g className="animate-tetris-fall">
+                    <rect x="16" y="4" width="8" height="8" rx="1" opacity="0.9" />
+                    <rect x="8" y="12" width="8" height="8" rx="1" opacity="0.9" />
+                    <rect x="16" y="12" width="8" height="8" rx="1" opacity="0.9" />
+                    <rect x="24" y="12" width="8" height="8" rx="1" opacity="0.9" />
+                </g>
+            </svg>
+        </div>
     ),
     sudoku: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <line x1="9" y1="3" x2="9" y2="21" />
-            <line x1="15" y1="3" x2="15" y2="21" />
-            <line x1="3" y1="9" x2="21" y2="9" />
-            <line x1="3" y1="15" x2="21" y2="15" />
-            <text x="5.5" y="7.5" fontSize="4" fill="currentColor" stroke="none" fontWeight="bold">1</text>
-            <text x="11" y="13.5" fontSize="4" fill="currentColor" stroke="none" fontWeight="bold">5</text>
-            <text x="17" y="19.5" fontSize="4" fill="currentColor" stroke="none" fontWeight="bold">9</text>
-        </svg>
+        <div className="relative w-12 h-12">
+            {/* Grid with appearing numbers */}
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
+                <rect x="4" y="4" width="40" height="40" rx="3" />
+                <line x1="17.33" y1="4" x2="17.33" y2="44" />
+                <line x1="30.66" y1="4" x2="30.66" y2="44" />
+                <line x1="4" y1="17.33" x2="44" y2="17.33" />
+                <line x1="4" y1="30.66" x2="44" y2="30.66" />
+                {/* Animated numbers */}
+                <text x="9" y="14" fontSize="8" fill="currentColor" stroke="none" className="animate-fade-in" style={{ animationDelay: '0s' }}>1</text>
+                <text x="22" y="27" fontSize="8" fill="currentColor" stroke="none" fontWeight="bold" className="animate-fade-in" style={{ animationDelay: '0.3s' }}>5</text>
+                <text x="35" y="40" fontSize="8" fill="currentColor" stroke="none" className="animate-fade-in" style={{ animationDelay: '0.6s' }}>9</text>
+            </svg>
+        </div>
     ),
     wordSearch: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <text x="5" y="9" fontSize="4" fill="currentColor" stroke="none" fontFamily="monospace">W O R</text>
-            <text x="5" y="14" fontSize="4" fill="currentColor" stroke="none" fontFamily="monospace">X D S</text>
-            <text x="5" y="19" fontSize="4" fill="currentColor" stroke="none" fontFamily="monospace">A B C</text>
-            <circle cx="18" cy="18" r="4" strokeWidth="2" />
-            <line x1="20.5" y1="20.5" x2="23" y2="23" strokeWidth="2" strokeLinecap="round" />
-        </svg>
+        <div className="relative w-12 h-12">
+            {/* Grid with sweeping highlight */}
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
+                <rect x="4" y="4" width="40" height="36" rx="3" />
+                {/* Letters */}
+                <text x="8" y="15" fontSize="6" fill="currentColor" stroke="none" fontFamily="monospace">W O R D</text>
+                <text x="8" y="24" fontSize="6" fill="currentColor" stroke="none" fontFamily="monospace">X A B C</text>
+                <text x="8" y="33" fontSize="6" fill="currentColor" stroke="none" fontFamily="monospace">S E A R</text>
+                {/* Animated highlight line */}
+                <line x1="6" y1="12" x2="38" y2="12" strokeWidth="6" stroke="currentColor" opacity="0.3" className="animate-word-highlight" />
+                {/* Magnifying glass */}
+                <circle cx="38" cy="38" r="6" strokeWidth="2" fill="none" />
+                <line x1="42" y1="42" x2="46" y2="46" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+        </div>
     ),
     wordle: (
-        <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8">
-            <rect x="2" y="9" width="4" height="4" rx="0.5" fill="#6aaa64" />
-            <rect x="7" y="9" width="4" height="4" rx="0.5" fill="#c9b458" />
-            <rect x="12" y="9" width="4" height="4" rx="0.5" fill="#787c7e" />
-            <rect x="17" y="9" width="4" height="4" rx="0.5" fill="#6aaa64" />
-            <text x="3" y="12.5" fontSize="3" fill="white" fontWeight="bold">W</text>
-            <text x="8" y="12.5" fontSize="3" fill="white" fontWeight="bold">O</text>
-            <text x="13" y="12.5" fontSize="3" fill="white" fontWeight="bold">R</text>
-            <text x="18" y="12.5" fontSize="3" fill="white" fontWeight="bold">D</text>
-        </svg>
+        <div className="relative w-12 h-12">
+            {/* Animated letter tiles flipping */}
+            <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
+                <rect x="2" y="17" width="10" height="10" rx="1.5" fill="#6aaa64" className="animate-tile-flip" style={{ animationDelay: '0s' }} />
+                <rect x="14" y="17" width="10" height="10" rx="1.5" fill="#c9b458" className="animate-tile-flip" style={{ animationDelay: '0.1s' }} />
+                <rect x="26" y="17" width="10" height="10" rx="1.5" fill="#787c7e" className="animate-tile-flip" style={{ animationDelay: '0.2s' }} />
+                <rect x="38" y="17" width="8" height="10" rx="1.5" fill="#6aaa64" className="animate-tile-flip" style={{ animationDelay: '0.3s' }} />
+                {/* Letters */}
+                <text x="5" y="25" fontSize="6" fill="white" fontWeight="bold" className="animate-tile-flip" style={{ animationDelay: '0s' }}>W</text>
+                <text x="17" y="25" fontSize="6" fill="white" fontWeight="bold" className="animate-tile-flip" style={{ animationDelay: '0.1s' }}>O</text>
+                <text x="29" y="25" fontSize="6" fill="white" fontWeight="bold" className="animate-tile-flip" style={{ animationDelay: '0.2s' }}>R</text>
+                <text x="40" y="25" fontSize="6" fill="white" fontWeight="bold" className="animate-tile-flip" style={{ animationDelay: '0.3s' }}>D</text>
+            </svg>
+        </div>
+    ),
+    maze: (
+        <div className="relative w-12 h-12">
+            {/* Maze with animated path */}
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+                <rect x="4" y="4" width="40" height="40" rx="3" />
+                {/* Maze walls */}
+                <path d="M12 4 L12 20 M20 12 L20 28 M28 4 L28 20 M36 12 L36 36" opacity="0.5" />
+                <path d="M4 12 L20 12 M12 20 L36 20 M4 28 L28 28 M20 36 L44 36" opacity="0.5" />
+                {/* Animated runner dot */}
+                <circle cx="8" cy="8" r="3" fill="currentColor" className="animate-maze-run" />
+            </svg>
+        </div>
     ),
 };
 
@@ -91,12 +140,24 @@ function GameCard({ to, title, description, icon, color, stats }: GameCardProps)
             />
 
             <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
+                {/* Large animated icon area */}
+                <div className="flex items-center justify-center mb-4 h-24 rounded-xl transition-all duration-300"
+                    style={{ backgroundColor: `${color}15` }}
+                >
                     <div
-                        className="p-3 rounded-xl transition-transform duration-300 group-hover:scale-110"
-                        style={{ backgroundColor: `${color}20`, color }}
+                        className="p-4 rounded-xl transition-transform duration-300 group-hover:scale-110"
+                        style={{ color }}
                     >
                         {icon}
+                    </div>
+                </div>
+
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                        <h3 className="text-lg font-bold text-text group-hover:text-accent transition-colors">
+                            {title}
+                        </h3>
                     </div>
 
                     {winRate !== null && (
@@ -109,10 +170,7 @@ function GameCard({ to, title, description, icon, color, stats }: GameCardProps)
                     )}
                 </div>
 
-                <h3 className="text-lg font-bold text-text mb-1 group-hover:text-accent transition-colors">
-                    {title}
-                </h3>
-                <p className="text-sm text-subtle">
+                <p className="text-sm text-subtle mt-2">
                     {description}
                 </p>
 
@@ -204,6 +262,14 @@ export function GamesHub() {
             icon: GameIcons.wordle,
             color: '#eab308',
             stats: { played: wordleStats.gamesPlayed, won: wordleStats.gamesWon },
+        },
+        {
+            to: '/games/maze',
+            title: 'Maze Runner',
+            description: 'Navigate procedural mazes with tilt controls or touch',
+            icon: GameIcons.maze,
+            color: '#64748b',
+            stats: { played: 0, won: 0 },
         },
     ];
 
@@ -310,6 +376,19 @@ export function GamesHub() {
                 isOpen={showLogin}
                 onClose={() => setShowLogin(false)}
             />
+
+            {/* Footer with credits */}
+            <footer className="border-t border-elevated mt-auto">
+                <div className="px-4 sm:px-6 py-4 text-center">
+                    <p className="text-xs text-subtle">
+                        Inspired by <span className="text-text font-medium">Georg Bauer</span> (Georgius Agricola)
+                        &amp; his seminal work <em>De Re Metallica</em> (1556)
+                    </p>
+                    <p className="text-xs text-subtle mt-1">
+                        🎵 Background vibes: <span className="text-text font-medium">Metallica - Orion</span>
+                    </p>
+                </div>
+            </footer>
         </div>
     );
 }
