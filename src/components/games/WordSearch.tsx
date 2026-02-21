@@ -41,7 +41,7 @@ const DIRECTIONS: [number, number][] = [
 
 // Responsive cell size - calculated in component based on viewport
 const BASE_CELL_SIZE = 36;
-const MIN_CELL_SIZE = 28;
+
 
 // Generate empty grid
 function createEmptyGrid(size: number): string[][] {
@@ -197,9 +197,16 @@ export function WordSearch({
 
     // Calculate responsive cell size
     const cellSize = useMemo(() => {
-        const maxGridWidth = containerWidth - 16; // padding
-        const calculatedSize = Math.floor(maxGridWidth / gridSize);
-        return Math.max(MIN_CELL_SIZE, Math.min(BASE_CELL_SIZE, calculatedSize));
+        // Account for padding (p-2 = 8px * 2 sides = 16px) and grid gaps (gap-0.5 = 2px * (gridSize - 1))
+        const paddingX = 16;
+        const gapSize = 2; // gap-0.5 is 0.125rem = 2px
+        const totalGapWidth = gapSize * (gridSize - 1);
+
+        const availableWidth = containerWidth - paddingX - totalGapWidth;
+        const calculatedSize = Math.floor(availableWidth / gridSize);
+
+        // Lower default min size to 22 which is still tappable but fits better on small screens
+        return Math.max(22, Math.min(BASE_CELL_SIZE, calculatedSize));
     }, [containerWidth, gridSize]);
 
     // Track container width for responsive sizing
@@ -372,10 +379,10 @@ export function WordSearch({
             </div>
 
             {/* Grid */}
-            <div className="order-1 lg:order-2" ref={containerRef}>
+            <div className="order-1 lg:order-2 w-full overflow-x-auto flex justify-center py-2" ref={containerRef}>
                 <div
                     ref={gridRef}
-                    className="grid gap-0.5 p-2 bg-elevated rounded-lg select-none touch-none mx-auto"
+                    className="grid gap-0.5 p-2 bg-elevated rounded-lg select-none touch-none shadow-lg border border-muted"
                     style={{
                         gridTemplateColumns: `repeat(${gridSize}, ${cellSize}px)`,
                     }}

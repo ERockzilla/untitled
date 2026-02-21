@@ -1,5 +1,5 @@
 
-import React from 'react';
+
 
 interface GameIntroProps {
     title: string;
